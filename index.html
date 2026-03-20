@@ -473,6 +473,7 @@ let riskCircles = [];
 let routePolylines = [];
 let toastTimer;
 let lastOrigin = null, lastDest = null; // 用于导出高德导航
+let lastRiskRoadNames = [];             // 用于导出前弹窗提示
 
 window.onload = () => initApp(AMAP_KEY);
 
@@ -623,42 +624,46 @@ async function startPlanning(mode = 'normal') {
       // ── 智能避让：先规划普通路线，检测风险，再带 avoidpolygons 重规划 ──
       const origRoute = await planRoute(originLnglat, destLnglat, 0);
       const origPath  = extractPath(origRoute.paths[0]);
+      const origSteps = origRoute.paths[0].steps || [];
       const riskCams  = activeCams.filter(cam => isNearPath(origPath, [cam.lng, cam.lat], 150));
 
-      // 原始路线：灰色细线
-      drawPolyline(origPath, '#556677', 3, 0.5);
+      // ① 原始路线：灰色加粗 + 红色风险段叠加
+      drawSegmentedRoute(origPath, riskCams);
       drawEndpointMarkers(originLnglat, destLnglat, originText, destText);
+      highlightRiskCameras(riskCams);
 
       let avoidPath = null;
       let avoidedCount = 0;
+      let riskRoadNames = [];
 
       if (riskCams.length > 0) {
-        highlightRiskCameras(riskCams);
-        // 把风险摄像头转成 avoidpolygons（每个摄像头周围约 120m 的小方块）
+        // 提取风险路段道路名
+        riskRoadNames = extractRiskRoadNames(origPath, origSteps, riskCams);
         avoidPath = await planRouteWithAvoid(originLnglat, destLnglat, riskCams);
         if (avoidPath) {
           const afterRisk = activeCams.filter(cam => isNearPath(avoidPath, [cam.lng, cam.lat], 150)).length;
           avoidedCount = Math.max(0, riskCams.length - afterRisk);
-          // 避让路线：亮绿色实线
-          drawPolyline(avoidPath, '#00ff88', 5, 0.9);
+          // ② 避让路线：绿色实线（zIndex 更高覆盖在上）
+          drawPolyline(avoidPath, '#00ff88', 5, 0.92);
+          // ③ 标注分叉对比点
+          drawDiffMarkers(origPath, avoidPath);
         }
       } else {
-        // 没有风险直接画绿色
         drawPolyline(origPath, '#00ff88', 5, 0.9);
       }
 
+      lastRiskRoadNames = riskRoadNames;
       updateStats(riskCams.length, avoidedCount);
       hideLoading();
-
-      // 显示「在高德导航」按钮
       document.getElementById('export-btn').style.display = 'block';
 
       if (riskCams.length === 0) {
         showToast('safe', '✅ 路线安全', '沿途无风险摄像头，绿色路线可直接出行');
       } else if (avoidPath) {
-        showToast('safe', `🛡 已避开 ${avoidedCount} 个摄像头`, `灰色为原路线，绿色为避让路线\n原风险点 ${riskCams.length} 个`);
+        showToast('safe', `🛡 已避开 ${avoidedCount} 个摄像头`,
+          `灰红色=原路线  绿色=避让路线\n◆ 标注点为路线差异处`);
       } else {
-        showToast('risk', `⚠️ 无法完全避让`, `共 ${riskCams.length} 个风险点，建议人工查看`);
+        showToast('risk', `⚠️ 无法完全避让`, `共 ${riskCams.length} 个风险点`);
       }
     }
 
@@ -870,29 +875,125 @@ function drawPolyline(path, color, weight, opacity, dashArray) {
   routePolylines.push(poly);
 }
 
-// ─── 导出到高德地图导航 ───────────────────────────────────────────────────────
+// ─── 提取风险路段道路名 ───────────────────────────────────────────────────────
+function extractRiskRoadNames(path, steps, riskCams) {
+  const names = new Set();
+  steps.forEach(step => {
+    const road = step.road || step.instruction || '';
+    if (!road) return;
+    // 解析该 step 的路径点
+    const pts = [];
+    (step.polyline || '').split(';').forEach(pair => {
+      const [lng, lat] = pair.split(',').map(Number);
+      if (!isNaN(lng)) pts.push([lng, lat]);
+    });
+    // 如果该 step 任意点靠近风险摄像头，记录路名
+    const isRisk = pts.some(pt =>
+      riskCams.some(cam => haversine(pt, [cam.lng, cam.lat]) < 200)
+    );
+    if (isRisk) names.add(road);
+  });
+  return [...names].slice(0, 8); // 最多显示8条
+}
+
+// ─── 标注两条路线分叉对比点 ──────────────────────────────────────────────────
+function drawDiffMarkers(origPath, avoidPath) {
+  if (!origPath.length || !avoidPath.length) return;
+
+  // 找出避让路线上距离原路线最远的点（差异最大处）
+  let maxDist = 0, maxPt = null;
+  avoidPath.forEach(pt => {
+    const minDist = Math.min(...origPath.map(op => haversine(pt, op)));
+    if (minDist > maxDist) { maxDist = minDist; maxPt = pt; }
+  });
+
+  if (!maxPt || maxDist < 100) return; // 差异太小不标注
+
+  // 在分叉最大处画橙色钻石标注
+  const marker = new AMap.Marker({
+    position: maxPt,
+    content: `
+      <div style="
+        background:#ff9900;
+        color:#000;
+        font-family:'Noto Sans SC',sans-serif;
+        font-size:10px; font-weight:700;
+        padding:3px 8px;
+        border-radius:4px;
+        white-space:nowrap;
+        box-shadow:0 2px 8px rgba(0,0,0,0.5);
+        transform:translateX(-50%) translateY(-130%);
+        border: 1px solid rgba(255,200,0,0.6);
+      ">◆ 绕行点 +${Math.round(maxDist)}m</div>
+    `,
+    offset: new AMap.Pixel(0, 0),
+    zIndex: 190,
+  });
+  marker.setMap(map);
+  riskCircles.push(marker);
+
+  // 同时在原路线对应位置标注"原路线经过此处"
+  let minDist2 = Infinity, closestOrig = null;
+  origPath.forEach(pt => {
+    const d = haversine(pt, maxPt);
+    if (d < minDist2) { minDist2 = d; closestOrig = pt; }
+  });
+  if (closestOrig) {
+    const marker2 = new AMap.Marker({
+      position: closestOrig,
+      content: `
+        <div style="
+          background:#ff3355;
+          color:#fff;
+          font-family:'Noto Sans SC',sans-serif;
+          font-size:10px; font-weight:700;
+          padding:3px 8px;
+          border-radius:4px;
+          white-space:nowrap;
+          box-shadow:0 2px 8px rgba(0,0,0,0.5);
+          transform:translateX(-50%) translateY(-130%);
+        ">✕ 原路线风险段</div>
+      `,
+      offset: new AMap.Pixel(0, 0),
+      zIndex: 190,
+    });
+    marker2.setMap(map);
+    riskCircles.push(marker2);
+  }
+}
+
+// ─── 导出到高德地图导航（带风险路段提示弹窗） ────────────────────────────────
 function exportToAmap() {
   if (!lastOrigin || !lastDest) return;
+
+  // 如果有风险路段，先弹提示
+  if (lastRiskRoadNames.length > 0) {
+    const roadList = lastRiskRoadNames.map(r => `• ${r}`).join('\n');
+    const confirmed = confirm(
+      `⚠️ 注意：高德导航路线与避让路线可能不同\n\n` +
+      `以下路段在原路线中存在摄像头风险，\n` +
+      `请在高德导航时手动避开：\n\n` +
+      `${roadList}\n\n` +
+      `点击「确定」继续打开高德导航`
+    );
+    if (!confirmed) return;
+  }
+
   const [oLng, oLat] = lastOrigin.lnglat;
   const [dLng, dLat] = lastDest.lnglat;
   const oName = encodeURIComponent(lastOrigin.name);
   const dName = encodeURIComponent(lastDest.name);
 
-  // 优先尝试高德地图 App（手机端 URL Scheme）
   const appUrl = `amapuri://route/plan?sourceApplication=camera_intel`
     + `&slat=${oLat}&slng=${oLng}&sname=${oName}`
     + `&dlat=${dLat}&dlng=${dLng}&dname=${dName}&dev=0&t=0`;
 
-  // 降级到高德 Web 版（PC / 未安装 App）
   const webUrl = `https://uri.amap.com/navigation?from=${oLng},${oLat},${oName}&to=${dLng},${dLat},${dName}&mode=car&policy=0&src=camera_intel&coordinate=gaode&callnative=1`;
 
-  // 手机端先尝试唤起 App，1.5s 后降级到网页
   const start = Date.now();
   window.location.href = appUrl;
   setTimeout(() => {
-    if (Date.now() - start < 2000) {
-      window.open(webUrl, '_blank');
-    }
+    if (Date.now() - start < 2000) window.open(webUrl, '_blank');
   }, 1500);
 }
 
