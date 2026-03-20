@@ -106,9 +106,12 @@ func main() {
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"*"},
+		AllowOrigins: []string{"*", "null"},
 		AllowMethods: []string{"GET", "POST", "OPTIONS"},
 		AllowHeaders: []string{"Content-Type", "Authorization"},
+		AllowOriginFunc: func(origin string) bool {
+			return true
+		},
 	}))
 
 	r.GET("/health", func(c *gin.Context) { c.JSON(200, gin.H{"ok": true}) })
