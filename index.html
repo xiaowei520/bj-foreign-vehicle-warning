@@ -273,6 +273,148 @@
   /* Amap overrides */
   .amap-logo, .amap-copyright { opacity: 0.4 !important; }
 
+  /* ── Camera Detail Panel ── */
+  #detail-panel {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-bright);
+    border-radius: 16px 16px 0 0;
+    padding: 16px;
+    z-index: 400;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.34,1.1,0.64,1);
+    max-height: 70vh; overflow-y: auto;
+  }
+  #detail-panel.show { transform: translateY(0); }
+  .detail-handle { width:36px;height:3px;background:var(--border-bright);border-radius:2px;margin:0 auto 14px; }
+  .detail-header { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px; }
+  .detail-addr { font-size:14px;font-weight:700;flex:1; }
+  .detail-close { background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;padding:0 0 0 10px; }
+  .detail-meta { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px; }
+  .meta-chip { background:var(--bg-panel);border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:10px;color:var(--text-secondary); }
+  .conf-bar { height:4px;background:var(--border);border-radius:2px;margin-bottom:6px;overflow:hidden; }
+  .conf-fill { height:100%;border-radius:2px;transition:width 0.3s; }
+  .reports-title { font-size:11px;color:var(--text-secondary);font-weight:600;margin-bottom:8px;letter-spacing:0.05em; }
+  .report-item { background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px;display:flex;gap:10px;align-items:flex-start; }
+  .report-thumb { width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;cursor:pointer;border:1px solid var(--border); }
+  .report-info { flex:1;min-width:0; }
+  .report-time { font-size:10px;color:var(--text-secondary);margin-bottom:3px; }
+  .report-desc { font-size:11px;color:var(--text-primary); }
+  .report-badge { font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:4px;display:inline-block; }
+  .badge-approved { background:rgba(0,255,136,0.12);color:var(--accent-green); }
+  .badge-pending  { background:rgba(255,204,0,0.12);color:var(--accent-yellow); }
+  .btn-report { width:100%;background:linear-gradient(135deg,#334466,#223355);border:1px solid #445588;border-radius:8px;color:#aabbff;font-size:12px;font-weight:700;padding:10px;cursor:pointer;margin-top:10px;font-family:'Noto Sans SC',sans-serif; }
+
+  /* ── Report Modal ── */
+  #report-modal { position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:flex-end;justify-content:center;z-index:9000; }
+  #report-modal.show { display:flex; }
+  .report-sheet { background:var(--bg-card);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px; }
+  .report-sheet h3 { font-size:14px;font-weight:700;margin-bottom:4px; }
+  .report-sheet p  { font-size:11px;color:var(--text-secondary);margin-bottom:16px; }
+  .upload-area { border:2px dashed var(--border-bright);border-radius:10px;padding:20px;text-align:center;cursor:pointer;margin-bottom:12px; }
+  .upload-preview { width:100%;max-height:160px;object-fit:cover;border-radius:8px;display:none; }
+  .upload-icon { font-size:28px;margin-bottom:6px; }
+  .upload-text { font-size:11px;color:var(--text-secondary); }
+  .report-input { width:100%;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text-primary);font-size:12px;font-family:'Noto Sans SC',sans-serif;outline:none;margin-bottom:10px;resize:none; }
+  .report-btns { display:flex;gap:8px; }
+  .report-btns button { flex:1;padding:10px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans SC',sans-serif; }
+  .report-submit { background:linear-gradient(135deg,#00cc66,#009944);color:#000; }
+  .report-cancel { background:var(--bg-panel);color:var(--text-secondary);border:1px solid var(--border); }
+  #detail-panel {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-bright);
+    border-radius: 16px 16px 0 0;
+    padding: 16px;
+    z-index: 400;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.34,1.1,0.64,1);
+    max-height: 70vh; overflow-y: auto;
+  }
+  #detail-panel.show { transform: translateY(0); }
+  .detail-handle {
+    width: 36px; height: 3px; background: var(--border-bright);
+    border-radius: 2px; margin: 0 auto 14px;
+  }
+  .detail-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; }
+  .detail-addr { font-size:14px; font-weight:700; flex:1; }
+  .detail-close { background:none; border:none; color:var(--text-secondary); font-size:18px; cursor:pointer; padding:0 0 0 10px; }
+  .detail-meta { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .meta-chip {
+    background: var(--bg-panel); border:1px solid var(--border);
+    border-radius:20px; padding:3px 9px; font-size:10px; color:var(--text-secondary);
+  }
+  .conf-bar { height:4px; background:var(--border); border-radius:2px; margin-bottom:14px; overflow:hidden; }
+  .conf-fill { height:100%; border-radius:2px; }
+
+  /* Reports list */
+  .reports-title { font-size:11px; color:var(--text-secondary); font-weight:600; margin-bottom:8px; letter-spacing:0.05em; }
+  .report-item {
+    background:var(--bg-panel); border:1px solid var(--border);
+    border-radius:8px; padding:10px; margin-bottom:6px;
+    display:flex; gap:10px; align-items:flex-start;
+  }
+  .report-thumb {
+    width:48px; height:48px; border-radius:6px; object-fit:cover;
+    flex-shrink:0; cursor:pointer; border:1px solid var(--border);
+  }
+  .report-info { flex:1; min-width:0; }
+  .report-time { font-size:10px; color:var(--text-secondary); margin-bottom:3px; }
+  .report-desc { font-size:11px; color:var(--text-primary); }
+  .report-badge {
+    font-size:9px; font-weight:700; padding:2px 6px; border-radius:4px;
+    margin-top:4px; display:inline-block;
+  }
+  .badge-approved { background:rgba(0,255,136,0.12); color:var(--accent-green); }
+  .badge-pending  { background:rgba(255,204,0,0.12);  color:var(--accent-yellow); }
+
+  .btn-report {
+    width:100%; background:linear-gradient(135deg,#334466,#223355);
+    border:1px solid #445588; border-radius:8px;
+    color:#aabbff; font-size:12px; font-weight:700;
+    padding:10px; cursor:pointer; margin-top:10px;
+    font-family:'Noto Sans SC',sans-serif;
+  }
+  .btn-report:active { opacity:0.8; }
+
+  /* ── Report Upload Modal ── */
+  #report-modal {
+    position:fixed; inset:0; background:rgba(0,0,0,0.7);
+    display:none; align-items:flex-end; justify-content:center;
+    z-index:9000;
+  }
+  #report-modal.show { display:flex; }
+  .report-sheet {
+    background:var(--bg-card); border-radius:16px 16px 0 0;
+    padding:20px; width:100%; max-width:480px;
+  }
+  .report-sheet h3 { font-size:14px; font-weight:700; margin-bottom:4px; }
+  .report-sheet p  { font-size:11px; color:var(--text-secondary); margin-bottom:16px; }
+  .upload-area {
+    border:2px dashed var(--border-bright); border-radius:10px;
+    padding:20px; text-align:center; cursor:pointer;
+    margin-bottom:12px; transition:border-color 0.2s;
+  }
+  .upload-area:hover { border-color:var(--accent-blue); }
+  .upload-area input { display:none; }
+  .upload-preview { width:100%; max-height:160px; object-fit:cover; border-radius:8px; display:none; }
+  .upload-icon { font-size:28px; margin-bottom:6px; }
+  .upload-text { font-size:11px; color:var(--text-secondary); }
+  .report-input {
+    width:100%; background:var(--bg-panel); border:1px solid var(--border);
+    border-radius:8px; padding:10px; color:var(--text-primary);
+    font-size:12px; font-family:'Noto Sans SC',sans-serif;
+    outline:none; margin-bottom:10px; resize:none;
+  }
+  .report-btns { display:flex; gap:8px; }
+  .report-btns button {
+    flex:1; padding:10px; border:none; border-radius:8px;
+    font-size:12px; font-weight:700; cursor:pointer;
+    font-family:'Noto Sans SC',sans-serif;
+  }
+  .report-submit { background:linear-gradient(135deg,#00cc66,#009944); color:#000; }
+  .report-cancel { background:var(--bg-panel); color:var(--text-secondary); border:1px solid var(--border); }
+
   /* ── Export Button ── */
   #export-btn {
     position: absolute;
@@ -366,6 +508,49 @@
   <button id="export-btn" onclick="exportToAmap()" style="display:none">
     🧭 在高德导航
   </button>
+
+  <!-- 摄像头详情面板 -->
+  <div id="detail-panel">
+    <div class="detail-handle"></div>
+    <div class="detail-header">
+      <div class="detail-addr" id="detail-addr">—</div>
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-meta" id="detail-meta"></div>
+    <div class="conf-bar"><div class="conf-fill" id="detail-conf-fill"></div></div>
+    <div style="font-size:10px;color:var(--text-secondary);margin-bottom:14px" id="detail-conf-text"></div>
+    <div class="reports-title">📋 用户上报记录</div>
+    <div id="detail-reports"><div style="font-size:11px;color:var(--text-secondary);padding:10px 0">加载中…</div></div>
+    <button class="btn-report" onclick="openReportModal()">＋ 我也被这里拍了，上报摄像头</button>
+  </div>
+</div>
+
+<!-- 上报弹窗 -->
+<div id="report-modal">
+  <div class="report-sheet">
+    <h3>📡 上报摄像头</h3>
+    <p id="report-modal-addr">上传违章截图，审核通过后将显示在地图</p>
+    <div class="upload-area" onclick="document.getElementById('screenshot-input').click()">
+      <input type="file" id="screenshot-input" accept="image/*" onchange="previewImage(this)" />
+      <img class="upload-preview" id="upload-preview" />
+      <div id="upload-placeholder">
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">点击上传违章截图（必填）</div>
+      </div>
+    </div>
+    <textarea class="report-input" id="report-desc" rows="2" placeholder="补充说明（可选）：如被拍时间、车辆行驶方向…"></textarea>
+    <input class="report-input" id="report-province" placeholder="被拍车牌省份（可选，如：京、沪、粤…）" style="margin-bottom:10px" />
+    <div class="report-btns">
+      <button class="report-cancel" onclick="closeReportModal()">取消</button>
+      <button class="report-submit" onclick="submitReport()">提交上报</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div id="img-modal" onclick="document.getElementById('img-modal').style.display='none'"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <img id="img-modal-img" style="max-width:100%;max-height:90vh;border-radius:8px" />
 </div>
 
 <div id="toast">
@@ -374,8 +559,11 @@
 </div>
 
 <script>
-const AMAP_KEY = 'd26baa97464440947fa097907ad12933';  // JS API Key（地图显示）
-const AMAP_REST_KEY = 'e36c8f26e27190f3f90650f99b5f31c9'; // Web服务 Key（路线规划）
+const AMAP_KEY      = 'd26baa97464440947fa097907ad12933';
+const AMAP_REST_KEY = 'e36c8f26e27190f3f90650f99b5f31c9';
+
+// ── Go 后端地址（Railway 部署后替换）──
+const BACKEND_URL = 'https://bj-foreign-vehicle-warning-production.up.railway.app';
 
 // ─── Mock API (replace with real /api/cameras) ───────────────────────────────
 const MOCK_CAMERAS = [
@@ -455,14 +643,17 @@ const MOCK_CAMERAS = [
 ];
 
 async function fetchCameras() {
-  try {
-    const res = await fetch('/api/cameras', { signal: AbortSignal.timeout(3000) });
-    if (!res.ok) throw new Error();
-    return await res.json();
-  } catch {
-    console.warn('[情报站] 使用 Mock 数据（/api/cameras 未响应）');
-    return MOCK_CAMERAS;
+  if (BACKEND_URL !== 'https://YOUR_APP.railway.app') {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/cameras`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.length) return data;
+      }
+    } catch(e) { console.warn('后端拉取失败，使用 Mock 数据', e); }
   }
+  console.warn('[情报站] 使用 Mock 数据');
+  return MOCK_CAMERAS;
 }
 
 // ─── App State ────────────────────────────────────────────────────────────────
@@ -538,12 +729,7 @@ function renderCameraMarkers() {
       zIndex: isActive ? 12 : 10,
       extData: cam,
     });
-    marker.on('click', () => {
-      showToast('info',
-        `📡 ${isActive ? '有效摄像头' : '⚠️ 已失效'}`,
-        `${cam.address}\n更新：${cam.update_time}`
-      );
-    });
+    marker.on('click', () => showCameraDetail(cam));
     marker.setMap(map);
     cameraMarkers.push(marker);
   });
@@ -962,7 +1148,170 @@ function drawDiffMarkers(origPath, avoidPath) {
   }
 }
 
-// ─── 导出到高德地图导航（带风险路段提示弹窗） ────────────────────────────────
+// ─── Supabase helpers ─────────────────────────────────────────────────────────
+async function sbAnon(path, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// ─── 摄像头详情面板 ───────────────────────────────────────────────────────────
+let currentCamera = null;
+
+async function showCameraDetail(cam) {
+  currentCamera = cam;
+  const conf = cam.confidence ?? 100;
+  const confColor = conf > 60 ? 'var(--accent-green)' : conf > 30 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+  const daysSince = cam.last_report_at
+    ? Math.floor((Date.now() - new Date(cam.last_report_at)) / 86400000)
+    : null;
+
+  document.getElementById('detail-addr').textContent = cam.address || `${cam.lng?.toFixed(4)}, ${cam.lat?.toFixed(4)}`;
+  document.getElementById('detail-meta').innerHTML = `
+    <div class="meta-chip">${cam.status === 'active' ? '✅ 有效' : cam.status === 'pending' ? '⏳ 待审核' : '⚠️ 已失效'}</div>
+    <div class="meta-chip">👥 ${cam.report_count ?? 1} 人上报</div>
+    ${daysSince !== null ? `<div class="meta-chip">🕐 ${daysSince} 天前更新</div>` : ''}
+    <div class="meta-chip">准确度 ${conf}%</div>
+  `;
+  document.getElementById('detail-conf-fill').style.cssText = `width:${conf}%;background:${confColor}`;
+  document.getElementById('detail-conf-text').textContent =
+    conf >= 70 ? '✅ 数据较新，可信度高' :
+    conf >= 40 ? '⚠️ 数据有一定时间，建议谨慎参考' :
+    '🔴 数据较旧（超过1年），准确度低';
+
+  document.getElementById('detail-panel').classList.add('show');
+  document.getElementById('report-modal-addr').textContent =
+    `位置：${cam.address || '未知地址'} · 审核通过后将显示在地图`;
+
+  // 拉取该摄像头的 reports
+  const reportsEl = document.getElementById('detail-reports');
+  reportsEl.innerHTML = '<div style="font-size:11px;color:var(--text-secondary);padding:8px 0">加载中…</div>';
+
+  try {
+    if (cam.id && BACKEND_URL !== 'https://YOUR_APP.railway.app') {
+      const res = await fetch(`${BACKEND_URL}/api/cameras/${cam.id}/reports`);
+      const reports = res.ok ? await res.json() : [];
+      if (!reports.length) {
+        reportsEl.innerHTML = '<div style="font-size:11px;color:var(--text-secondary);padding:8px 0">暂无上报记录</div>';
+      } else {
+        reportsEl.innerHTML = reports.map(r => {
+          const t = new Date(r.reported_at).toLocaleDateString('zh-CN');
+          return `
+            <div class="report-item">
+              ${r.screenshot_url
+                ? `<img class="report-thumb" src="${r.screenshot_url}" onclick="openImgModal('${r.screenshot_url}')" />`
+                : `<div style="width:48px;height:48px;background:var(--border);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px">📷</div>`}
+              <div class="report-info">
+                <div class="report-time">🕐 ${t} ${r.plate_province ? `· 🚗 ${r.plate_province}` : ''}</div>
+                <div class="report-desc">${r.description || '无补充说明'}</div>
+                <div class="report-badge ${r.status === 'approved' ? 'badge-approved' : 'badge-pending'}">
+                  ${r.status === 'approved' ? '✅ 已验证' : '⏳ 待审核'}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    } else {
+      reportsEl.innerHTML = '<div style="font-size:11px;color:var(--text-secondary);padding:8px 0">连接后端后可查看上报记录</div>';
+    }
+  } catch(e) {
+    reportsEl.innerHTML = `<div style="font-size:11px;color:var(--accent-red);padding:8px 0">加载失败</div>`;
+  }
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('show');
+  currentCamera = null;
+}
+
+// ─── 上报弹窗 ─────────────────────────────────────────────────────────────────
+let reportFile = null;
+
+function openReportModal() {
+  if (!currentCamera) return;
+  document.getElementById('report-modal').classList.add('show');
+}
+
+function closeReportModal() {
+  document.getElementById('report-modal').classList.remove('show');
+  document.getElementById('screenshot-input').value = '';
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('upload-placeholder').style.display = 'block';
+  document.getElementById('report-desc').value = '';
+  document.getElementById('report-province').value = '';
+  reportFile = null;
+}
+
+function previewImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  reportFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('upload-preview');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('upload-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submitReport() {
+  if (!currentCamera) return;
+  if (!reportFile) { showToast('error', '请上传截图', '违章截图为必填项'); return; }
+
+  const submitBtn = document.querySelector('.report-submit');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '提交中…';
+
+  try {
+    if (BACKEND_URL === 'https://YOUR_APP.railway.app') {
+      throw new Error('请先配置后端地址 BACKEND_URL');
+    }
+
+    // 用 FormData 直接发给 Go 后端
+    const form = new FormData();
+    form.append('screenshot', reportFile);
+    form.append('lng',           String(currentCamera.lng));
+    form.append('lat',           String(currentCamera.lat));
+    form.append('address',       currentCamera.address || '');
+    form.append('camera_id',     String(currentCamera.id || ''));
+    form.append('description',   document.getElementById('report-desc').value.trim());
+    form.append('plate_province',document.getElementById('report-province').value.trim());
+
+    const res = await fetch(`${BACKEND_URL}/api/report`, { method: 'POST', body: form });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || '提交失败');
+    }
+
+    closeReportModal();
+    closeDetail();
+    showToast('safe', '✅ 上报成功', '感谢你的贡献！审核通过后将显示在地图上');
+
+  } catch(e) {
+    showToast('error', '提交失败', e.message);
+  }
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = '提交上报';
+}
+
+function openImgModal(url) {
+  const modal = document.getElementById('img-modal');
+  document.getElementById('img-modal-img').src = url;
+  modal.style.display = 'flex';
+}
 function exportToAmap() {
   if (!lastOrigin || !lastDest) return;
 
