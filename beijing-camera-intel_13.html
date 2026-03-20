@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>进京证摄像头情报站</title>
+<script src="https://webapi.amap.com/loader.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg-deep: #0a0c10;
+    --bg-card: #111318;
+    --bg-panel: #161a22;
+    --border: #1f2633;
+    --border-bright: #2a3345;
+    --accent-green: #00ff88;
+    --accent-red: #ff3355;
+    --accent-yellow: #ffcc00;
+    --accent-blue: #4488ff;
+    --text-primary: #e8edf5;
+    --text-secondary: #7a8899;
+    --text-dim: #3d4d60;
+    --glow-green: 0 0 12px rgba(0,255,136,0.4);
+    --glow-red: 0 0 12px rgba(255,51,85,0.4);
+    --glow-yellow: 0 0 12px rgba(255,204,0,0.35);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 14px 8px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--accent-green), #00cc66);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    box-shadow: var(--glow-green);
+  }
+
+  .logo-text {
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text-primary);
+  }
+  .logo-sub {
+    font-size: 9px; color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em;
+  }
+
+  .status-badge {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(0,255,136,0.07);
+    border: 1px solid rgba(0,255,136,0.2);
+    border-radius: 20px;
+    padding: 3px 8px;
+    font-size: 10px;
+    color: var(--accent-green);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .status-dot {
+    width: 5px; height: 5px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    box-shadow: var(--glow-green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* ── Input Row ── */
+  .input-section {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+
+  .input-row {
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .input-label {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .input-label.start { background: var(--accent-green); color: #000; box-shadow: var(--glow-green); }
+  .input-label.end   { background: var(--accent-red);   color: #fff; box-shadow: var(--glow-red); }
+
+  .input-field {
+    flex: 1;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: 'Noto Sans SC', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input-field::placeholder { color: var(--text-dim); }
+  .input-field:focus {
+    border-color: var(--border-bright);
+    box-shadow: 0 0 0 2px rgba(68,136,255,0.12);
+  }
+
+  .btn-plan {
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 12px; font-weight: 700;
+    padding: 8px 0;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: transform 0.15s, box-shadow 0.15s;
+    flex: 1;
+  }
+  .btn-plan:active { transform: scale(0.96); }
+  .btn-plan:disabled { opacity: 0.5; }
+  .btn-normal {
+    background: linear-gradient(135deg, #334466, #223355);
+    border: 1px solid #445588;
+    color: #aabbff;
+    box-shadow: 0 2px 8px rgba(68,136,255,0.15);
+  }
+  .btn-avoid {
+    background: linear-gradient(135deg, #ff3355, #cc1133);
+    box-shadow: 0 2px 12px rgba(255,51,85,0.3);
+  }
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  /* ── Stats Bar ── */
+  .stats-bar {
+    display: flex; gap: 6px; margin-top: 8px;
+  }
+
+  .stat-chip {
+    flex: 1;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 6px;
+    text-align: center;
+  }
+  .stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; font-weight: 600;
+  }
+  .stat-label { font-size: 9px; color: var(--text-secondary); margin-top: 1px; }
+  .stat-val.green { color: var(--accent-green); }
+  .stat-val.gray  { color: var(--text-secondary); }
+  .stat-val.yellow { color: var(--accent-yellow); }
+  .stat-val.red   { color: var(--accent-red); }
+
+  /* ── Map ── */
+  #map {
+    flex: 1;
+    position: relative;
+  }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    border-radius: 12px;
+    padding: 12px 20px;
+    min-width: 260px; max-width: 320px;
+    text-align: center;
+    z-index: 9999;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+    backdrop-filter: blur(8px);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  .toast-title {
+    font-size: 13px; font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .toast-body { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+
+  .toast-risk   .toast-title { color: var(--accent-yellow); }
+  .toast-safe   .toast-title { color: var(--accent-green); }
+  .toast-info   .toast-title { color: var(--accent-blue); }
+  .toast-error  .toast-title { color: var(--accent-red); }
+
+  /* ── Legend ── */
+  .legend {
+    position: absolute;
+    bottom: 16px; right: 10px;
+    background: rgba(10,12,16,0.88);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    z-index: 200;
+    backdrop-filter: blur(6px);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px; color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .legend-item:last-child { margin-bottom: 0; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── Loading overlay ── */
+  #loading {
+    position: absolute; inset: 0;
+    background: rgba(10,12,16,0.75);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 500;
+    gap: 12px;
+    backdrop-filter: blur(2px);
+    transition: opacity 0.3s;
+  }
+  #loading.hidden { opacity: 0; pointer-events: none; }
+
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent-green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 12px; color: var(--text-secondary); letter-spacing: 0.05em; }
+
+  /* Amap overrides */
+  .amap-logo, .amap-copyright { opacity: 0.4 !important; }
+
+  /* ── Export Button ── */
+  #export-btn {
+    position: absolute;
+    bottom: 90px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #00cc66, #009944);
+    border: none;
+    border-radius: 24px;
+    color: #000;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px; font-weight: 700;
+    padding: 10px 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,204,102,0.4);
+    z-index: 300;
+    letter-spacing: 0.05em;
+    transition: transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  #export-btn:active { transform: translateX(-50%) scale(0.96); }
+</style>
+</head>
+<body>
+
+<!-- Key Gate removed -->
+<div class="header">
+  <div class="header-top">
+    <div class="logo">
+      <div class="logo-icon">📡</div>
+      <div>
+        <div class="logo-text">进京证情报站</div>
+        <div class="logo-sub">CAMERA INTEL · BEIJING</div>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      <span id="status-text">加载中</span>
+    </div>
+  </div>
+
+  <div class="input-section">
+    <div class="input-row">
+      <div class="input-label start">A</div>
+      <input class="input-field" id="origin-input" placeholder="起点（如：首都机场T3）" />
+    </div>
+    <div class="input-row">
+      <div class="input-label end">B</div>
+      <input class="input-field" id="dest-input" placeholder="终点（如：天安门广场）" />
+    </div>
+    <div class="btn-row">
+      <button class="btn-plan btn-normal" id="plan-btn" onclick="startPlanning('normal')">🗺 规划路线</button>
+      <button class="btn-plan btn-avoid" id="avoid-btn" onclick="startPlanning('avoid')">🛡 智能避让</button>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-chip">
+      <div class="stat-val green" id="stat-active">—</div>
+      <div class="stat-label">有效摄像头</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-val gray" id="stat-inactive">—</div>
+      <div class="stat-label">失效摄像头</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-val yellow" id="stat-risk">—</div>
+      <div class="stat-label">路线风险点</div>
+    </div>
+    <div class="stat-chip">
+      <div class="stat-val red" id="stat-avoid">—</div>
+      <div class="stat-label">已避开</div>
+    </div>
+  </div>
+</div>
+
+<div id="map">
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">正在加载地图与摄像头数据…</div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#00ff88"></div>有效摄像头</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#445566"></div>失效摄像头</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffcc00; box-shadow:0 0 6px #ffcc00"></div>风险摄像头</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff3355"></div>风险路段</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ccddee"></div>普通路线</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00ff88"></div>避让路线</div>
+  </div>
+
+  <button id="export-btn" onclick="exportToAmap()" style="display:none">
+    🧭 在高德导航
+  </button>
+</div>
+
+<div id="toast">
+  <div class="toast-title" id="toast-title"></div>
+  <div class="toast-body" id="toast-body"></div>
+</div>
+
+<script>
+const AMAP_KEY = 'd26baa97464440947fa097907ad12933';  // JS API Key（地图显示）
+const AMAP_REST_KEY = 'e36c8f26e27190f3f90650f99b5f31c9'; // Web服务 Key（路线规划）
+
+// ─── Mock API (replace with real /api/cameras) ───────────────────────────────
+const MOCK_CAMERAS = [
+  // ── 长安街 / 二环核心 ──
+  { id:1,  lng:116.4074, lat:39.9042, status:'active',   address:'天安门广场北',       update_time:'2024-01-15' },
+  { id:2,  lng:116.3912, lat:39.9069, status:'active',   address:'西长安街西单口',     update_time:'2024-01-15' },
+  { id:3,  lng:116.4230, lat:39.9055, status:'active',   address:'东长安街王府井',     update_time:'2024-01-15' },
+  { id:4,  lng:116.4551, lat:39.9124, status:'active',   address:'建国门外大街',       update_time:'2024-01-14' },
+  { id:5,  lng:116.3760, lat:39.9150, status:'active',   address:'复兴门桥',           update_time:'2024-01-15' },
+  { id:6,  lng:116.4352, lat:39.9213, status:'active',   address:'东二环东直门',       update_time:'2024-01-15' },
+  { id:7,  lng:116.3883, lat:39.9289, status:'active',   address:'西二环西直门',       update_time:'2024-01-15' },
+  { id:8,  lng:116.4180, lat:39.9380, status:'active',   address:'二环鼓楼桥',         update_time:'2024-01-15' },
+  { id:9,  lng:116.3720, lat:39.8980, status:'active',   address:'二环菜市口',         update_time:'2024-01-14' },
+  { id:10, lng:116.4430, lat:39.8950, status:'active',   address:'东二环崇文门',       update_time:'2024-01-15' },
+
+  // ── 三环 ──
+  { id:11, lng:116.2572, lat:39.9198, status:'active',   address:'西三环莲花桥',       update_time:'2024-01-10' },
+  { id:12, lng:116.3060, lat:39.9650, status:'active',   address:'西三环紫竹院',       update_time:'2024-01-15' },
+  { id:13, lng:116.3283, lat:39.8672, status:'active',   address:'南三环马家堡',       update_time:'2024-01-11' },
+  { id:14, lng:116.4560, lat:39.8780, status:'active',   address:'南三环石榴庄',       update_time:'2024-01-15' },
+  { id:15, lng:116.5010, lat:39.9080, status:'active',   address:'东三环国贸桥',       update_time:'2024-01-15' },
+  { id:16, lng:116.4900, lat:39.9380, status:'active',   address:'东三环亮马桥',       update_time:'2024-01-15' },
+  { id:17, lng:116.4650, lat:39.9620, status:'active',   address:'东三环三元桥',       update_time:'2024-01-15' },
+  { id:18, lng:116.3500, lat:39.9750, status:'active',   address:'北三环马甸桥',       update_time:'2024-01-13' },
+  { id:19, lng:116.4074, lat:39.9750, status:'active',   address:'北三环安贞桥',       update_time:'2024-01-15' },
+
+  // ── 四环 ──
+  { id:20, lng:116.3271, lat:39.9901, status:'active',   address:'北四环西路海淀桥',   update_time:'2024-01-15' },
+  { id:21, lng:116.2800, lat:39.9550, status:'active',   address:'西四环北路',         update_time:'2024-01-15' },
+  { id:22, lng:116.2650, lat:39.9100, status:'active',   address:'西四环中路岗洼',     update_time:'2024-01-14' },
+  { id:23, lng:116.2900, lat:39.8650, status:'active',   address:'西四环南路',         update_time:'2024-01-15' },
+  { id:24, lng:116.3800, lat:39.8400, status:'active',   address:'南四环西红门',       update_time:'2024-01-15' },
+  { id:25, lng:116.4833, lat:39.8724, status:'active',   address:'南四环分钟寺',       update_time:'2024-01-15' },
+  { id:26, lng:116.5300, lat:39.8900, status:'active',   address:'东四环十八里店',     update_time:'2024-01-12' },
+  { id:27, lng:116.5450, lat:39.9400, status:'active',   address:'东四环劲松桥',       update_time:'2024-01-15' },
+  { id:28, lng:116.5200, lat:39.9750, status:'active',   address:'东四环太阳宫',       update_time:'2024-01-15' },
+  { id:29, lng:116.4074, lat:40.0200, status:'active',   address:'北四环奥林匹克公园', update_time:'2024-01-15' },
+
+  // ── 五环 / 机场方向 ──
+  { id:30, lng:116.4074, lat:40.0532, status:'active',   address:'北五环北苑',         update_time:'2024-01-15' },
+  { id:31, lng:116.5123, lat:40.0178, status:'active',   address:'顺义牛栏山',         update_time:'2024-01-15' },
+  { id:32, lng:116.5900, lat:40.0650, status:'active',   address:'机场高速京顺路口',   update_time:'2024-01-15' },
+  { id:33, lng:116.6200, lat:40.0300, status:'active',   address:'机场高速五元桥',     update_time:'2024-01-15' },
+  { id:34, lng:116.6403, lat:39.9150, status:'active',   address:'通燕高速入口',       update_time:'2024-01-15' },
+  { id:35, lng:116.5800, lat:39.9500, status:'active',   address:'东五环定福庄',       update_time:'2024-01-14' },
+  { id:36, lng:116.3066, lat:39.9749, status:'active',   address:'上地四环出口',       update_time:'2024-01-12' },
+  { id:37, lng:116.2143, lat:40.0821, status:'active',   address:'北清路温泉',         update_time:'2024-01-13' },
+  { id:38, lng:116.3890, lat:40.1234, status:'active',   address:'五环北昌平路',       update_time:'2024-01-14' },
+  { id:39, lng:116.1800, lat:39.9600, status:'active',   address:'西五环田村路',       update_time:'2024-01-15' },
+  { id:40, lng:116.2100, lat:39.8800, status:'active',   address:'西五环六里桥南',     update_time:'2024-01-15' },
+
+  // ── 主要快速路 / 联络线 ──
+  { id:41, lng:116.4074, lat:39.8600, status:'active',   address:'京开高速榴乡桥',     update_time:'2024-01-15' },
+  { id:42, lng:116.4678, lat:39.8234, status:'active',   address:'大兴黄村西',         update_time:'2024-01-15' },
+  { id:43, lng:116.5050, lat:39.8500, status:'active',   address:'京津高速马驹桥',     update_time:'2024-01-13' },
+  { id:44, lng:116.3400, lat:40.0500, status:'active',   address:'京藏高速清河',       update_time:'2024-01-15' },
+  { id:45, lng:116.2700, lat:40.0200, status:'active',   address:'上地信息路口',       update_time:'2024-01-14' },
+  { id:46, lng:116.4350, lat:40.0800, status:'active',   address:'京承高速来广营',     update_time:'2024-01-15' },
+  { id:47, lng:116.3600, lat:39.8300, status:'active',   address:'南苑路丰台桥',       update_time:'2024-01-15' },
+  { id:48, lng:116.4900, lat:39.8100, status:'active',   address:'亦庄经海路',         update_time:'2024-01-15' },
+
+  // ── 失效点（灰色） ──
+  { id:49, lng:116.4672, lat:39.9947, status:'inactive', address:'望京东路失效',       update_time:'2023-11-01' },
+  { id:50, lng:116.5435, lat:39.9122, status:'inactive', address:'通州口失效点',       update_time:'2023-10-05' },
+  { id:51, lng:116.4074, lat:39.8234, status:'inactive', address:'南苑路失效',         update_time:'2023-09-20' },
+  { id:52, lng:116.1893, lat:39.8901, status:'inactive', address:'房山出入口失效',     update_time:'2023-08-15' },
+  { id:53, lng:116.3100, lat:39.8400, status:'inactive', address:'丰台南路失效',       update_time:'2023-12-01' },
+  { id:54, lng:116.5700, lat:40.0800, status:'inactive', address:'顺义仁和失效',       update_time:'2023-10-20' },
+  { id:55, lng:116.2400, lat:40.1100, status:'inactive', address:'昌平南口失效',       update_time:'2023-11-15' },
+
+  // ── 机场快线沿线密集点 ──
+  { id:56, lng:116.4700, lat:39.9600, status:'active',   address:'机场快线三元桥站',   update_time:'2024-01-15' },
+  { id:57, lng:116.5100, lat:39.9850, status:'active',   address:'机场快线望京东',     update_time:'2024-01-15' },
+  { id:58, lng:116.5500, lat:40.0100, status:'active',   address:'机场快线草桥',       update_time:'2024-01-15' },
+  { id:59, lng:116.5950, lat:40.0400, status:'active',   address:'机场快线首都机场',   update_time:'2024-01-15' },
+  { id:60, lng:116.4300, lat:39.9900, status:'active',   address:'四元桥匝道',         update_time:'2024-01-15' },
+];
+
+async function fetchCameras() {
+  try {
+    const res = await fetch('/api/cameras', { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) throw new Error();
+    return await res.json();
+  } catch {
+    console.warn('[情报站] 使用 Mock 数据（/api/cameras 未响应）');
+    return MOCK_CAMERAS;
+  }
+}
+
+// ─── App State ────────────────────────────────────────────────────────────────
+let map, geocoder, drivingPlugin;
+let cameras = [];
+let cameraMarkers = [];
+let riskCircles = [];
+let routePolylines = [];
+let toastTimer;
+let lastOrigin = null, lastDest = null; // 用于导出高德导航
+
+window.onload = () => initApp(AMAP_KEY);
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+async function initApp(key) {
+  showLoading('正在加载地图…');
+  try {
+    const AMap = await new Promise((resolve, reject) => {
+      window.AMapLoader.load({
+        key,
+        version: '2.0',
+        plugins: [],
+      }).then(resolve).catch(reject);
+    });
+    window.AMap = AMap;
+    initMap();
+    const data = await fetchCameras();
+    cameras = data;
+    renderCameraMarkers();
+    updateStats();
+    hideLoading();
+    document.getElementById('status-text').textContent = `${cameras.length} 点位`;
+  } catch(e) {
+    hideLoading();
+    showToast('error', 'Key 无效或网络错误', '请检查高德 API Key 是否正确，或刷新重试');
+    console.error(e);
+  }
+}
+
+function initMap() {
+  map = new AMap.Map('map', {
+    viewMode: '2D',
+    zoom: 11,
+    center: [116.4074, 39.9042],
+    mapStyle: 'amap://styles/dark',
+  });
+}
+
+// ─── Camera Markers ───────────────────────────────────────────────────────────
+function renderCameraMarkers() {
+  cameraMarkers.forEach(m => m.setMap(null));
+  cameraMarkers = [];
+
+  cameras.forEach(cam => {
+    const isActive = cam.status === 'active';
+    const color = isActive ? '#00ff88' : '#445566';
+    const size  = isActive ? 7 : 5;
+    const content = `
+      <div style="
+        width:${size*2}px; height:${size*2}px;
+        border-radius:50%;
+        background:${color};
+        border: 1.5px solid ${isActive ? 'rgba(0,255,136,0.5)' : 'rgba(68,85,102,0.3)'};
+        box-shadow: ${isActive ? `0 0 6px ${color}` : 'none'};
+        cursor:pointer;
+      "></div>
+    `;
+    const marker = new AMap.Marker({
+      position: [cam.lng, cam.lat],
+      content,
+      offset: new AMap.Pixel(-size, -size),
+      zIndex: isActive ? 12 : 10,
+      extData: cam,
+    });
+    marker.on('click', () => {
+      showToast('info',
+        `📡 ${isActive ? '有效摄像头' : '⚠️ 已失效'}`,
+        `${cam.address}\n更新：${cam.update_time}`
+      );
+    });
+    marker.setMap(map);
+    cameraMarkers.push(marker);
+  });
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+function updateStats(riskCount = '—', avoidCount = '—') {
+  const active   = cameras.filter(c => c.status === 'active').length;
+  const inactive = cameras.filter(c => c.status !== 'active').length;
+  document.getElementById('stat-active').textContent   = active;
+  document.getElementById('stat-inactive').textContent = inactive;
+  document.getElementById('stat-risk').textContent     = riskCount;
+  document.getElementById('stat-avoid').textContent    = avoidCount;
+}
+
+// ─── Geocode helper (REST API) ────────────────────────────────────────────────
+async function geocodeAddress(address) {
+  const url = `https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(address)}&city=北京&key=${AMAP_REST_KEY}&output=json`;
+  console.log('[地理编码] 请求:', url);
+  const res = await fetch(url);
+  const data = await res.json();
+  console.log('[地理编码] 响应:', data);
+  if (data.status !== '1' || !data.geocodes || !data.geocodes.length) {
+    throw new Error(`无法解析地址：${address}，错误：${data.info}`);
+  }
+  const [lng, lat] = data.geocodes[0].location.split(',').map(Number);
+  return [lng, lat];
+}
+
+// ─── Route Planning ───────────────────────────────────────────────────────────
+async function startPlanning(mode = 'normal') {
+  const originText = document.getElementById('origin-input').value.trim();
+  const destText   = document.getElementById('dest-input').value.trim();
+  if (!originText || !destText) {
+    showToast('error', '请填写起终点', '起点和终点不能为空');
+    return;
+  }
+
+  const planBtn  = document.getElementById('plan-btn');
+  const avoidBtn = document.getElementById('avoid-btn');
+  planBtn.disabled = true;
+  avoidBtn.disabled = true;
+  showLoading(mode === 'avoid' ? '正在智能避让规划…' : '正在规划路线…');
+  clearRoutes();
+
+  try {
+    const [originLnglat, destLnglat] = await Promise.all([
+      geocodeAddress(originText),
+      geocodeAddress(destText),
+    ]);
+
+    // 存起终点供导出用
+    lastOrigin = { lnglat: originLnglat, name: originText };
+    lastDest   = { lnglat: destLnglat,   name: destText };
+    document.getElementById('export-btn').style.display = 'none';
+
+    const activeCams = cameras.filter(c => c.status === 'active');
+
+    if (mode === 'normal') {
+      // ── 普通规划 ──────────────────────────────────────────────────
+      const route = await planRoute(originLnglat, destLnglat, 0);
+      const path  = extractPath(route.paths[0]);
+      const riskCams = activeCams.filter(cam => isNearPath(path, [cam.lng, cam.lat], 150));
+
+      drawSegmentedRoute(path, riskCams);          // 灰底 + 红色风险段
+      drawEndpointMarkers(originLnglat, destLnglat, originText, destText);
+      highlightRiskCameras(riskCams);
+      updateStats(riskCams.length, '—');
+      hideLoading();
+
+      if (riskCams.length === 0) {
+        showToast('safe', '✅ 路线安全', '当前路线未发现风险摄像头');
+      } else {
+        showToast('risk', `⚠️ ${riskCams.length} 个风险点`, '红色路段途经摄像头，可使用「智能避让」重新规划');
+      }
+
+    } else {
+      // ── 智能避让：先规划普通路线，检测风险，再带 avoidpolygons 重规划 ──
+      const origRoute = await planRoute(originLnglat, destLnglat, 0);
+      const origPath  = extractPath(origRoute.paths[0]);
+      const riskCams  = activeCams.filter(cam => isNearPath(origPath, [cam.lng, cam.lat], 150));
+
+      // 原始路线：灰色细线
+      drawPolyline(origPath, '#556677', 3, 0.5);
+      drawEndpointMarkers(originLnglat, destLnglat, originText, destText);
+
+      let avoidPath = null;
+      let avoidedCount = 0;
+
+      if (riskCams.length > 0) {
+        highlightRiskCameras(riskCams);
+        // 把风险摄像头转成 avoidpolygons（每个摄像头周围约 120m 的小方块）
+        avoidPath = await planRouteWithAvoid(originLnglat, destLnglat, riskCams);
+        if (avoidPath) {
+          const afterRisk = activeCams.filter(cam => isNearPath(avoidPath, [cam.lng, cam.lat], 150)).length;
+          avoidedCount = Math.max(0, riskCams.length - afterRisk);
+          // 避让路线：亮绿色实线
+          drawPolyline(avoidPath, '#00ff88', 5, 0.9);
+        }
+      } else {
+        // 没有风险直接画绿色
+        drawPolyline(origPath, '#00ff88', 5, 0.9);
+      }
+
+      updateStats(riskCams.length, avoidedCount);
+      hideLoading();
+
+      // 显示「在高德导航」按钮
+      document.getElementById('export-btn').style.display = 'block';
+
+      if (riskCams.length === 0) {
+        showToast('safe', '✅ 路线安全', '沿途无风险摄像头，绿色路线可直接出行');
+      } else if (avoidPath) {
+        showToast('safe', `🛡 已避开 ${avoidedCount} 个摄像头`, `灰色为原路线，绿色为避让路线\n原风险点 ${riskCams.length} 个`);
+      } else {
+        showToast('risk', `⚠️ 无法完全避让`, `共 ${riskCams.length} 个风险点，建议人工查看`);
+      }
+    }
+
+    map.setFitView(null, false, [60, 80, 60, 80]);
+
+  } catch (err) {
+    hideLoading();
+    showToast('error', '规划失败', err.message);
+    console.error(err);
+  }
+
+  planBtn.disabled = false;
+  avoidBtn.disabled = false;
+}
+
+// ─── Route helpers ────────────────────────────────────────────────────────────
+// ─── Route helpers (REST API) ─────────────────────────────────────────────────
+async function planRoute(origin, dest, strategy = 0) {
+  const url = `https://restapi.amap.com/v3/direction/driving?origin=${origin[0]},${origin[1]}&destination=${dest[0]},${dest[1]}&strategy=${strategy}&extensions=all&key=${AMAP_REST_KEY}&output=json`;
+  console.log('[路线规划] 请求:', url);
+  const res = await fetch(url);
+  const data = await res.json();
+  console.log('[路线规划] 响应:', data);
+  if (data.status !== '1' || !data.route || !data.route.paths || !data.route.paths.length) {
+    throw new Error(`路线规划失败：${data.info || '未知错误'}`);
+  }
+  return data.route;
+}
+
+// ─── 真正的避让规划：把风险摄像头转成 avoidpolygons 传给高德 ─────────────────
+async function planRouteWithAvoid(origin, dest, riskCams) {
+  // 每个摄像头生成一个约 150m 的方形避让区（经纬度偏移约 0.0014°）
+  const D = 0.0014;
+  const polygons = riskCams.map(cam => {
+    const { lng, lat } = cam;
+    return [
+      `${(lng-D).toFixed(6)},${(lat-D).toFixed(6)}`,
+      `${(lng+D).toFixed(6)},${(lat-D).toFixed(6)}`,
+      `${(lng+D).toFixed(6)},${(lat+D).toFixed(6)}`,
+      `${(lng-D).toFixed(6)},${(lat+D).toFixed(6)}`,
+    ].join(';');
+  });
+
+  // 高德限制 avoidpolygons 最多 16 个，取风险最高的前 16
+  const avoidpolygons = polygons.slice(0, 16).join('|');
+  const url = `https://restapi.amap.com/v3/direction/driving?origin=${origin[0]},${origin[1]}&destination=${dest[0]},${dest[1]}&strategy=0&extensions=all&avoidpolygons=${encodeURIComponent(avoidpolygons)}&key=${AMAP_REST_KEY}&output=json`;
+  console.log('[避让规划] 请求:', url);
+  const res  = await fetch(url);
+  const data = await res.json();
+  console.log('[避让规划] 响应:', data);
+  if (data.status !== '1' || !data.route?.paths?.length) return null;
+  return extractPath(data.route.paths[0]);
+}
+
+function extractPath(pathObj) {
+  // REST API 返回: steps[].polyline = "lng,lat;lng,lat;..."
+  const pts = [];
+  (pathObj.steps || []).forEach(step => {
+    const polyline = step.polyline || '';
+    polyline.split(';').forEach(pair => {
+      const [lng, lat] = pair.split(',').map(Number);
+      if (!isNaN(lng) && !isNaN(lat)) pts.push([lng, lat]);
+    });
+  });
+  return pts;
+}
+
+// ─── 起终点大图标 ──────────────────────────────────────────────────────────────
+function drawEndpointMarkers(originLnglat, destLnglat, originText, destText) {
+  const makeIcon = (label, color, textColor) => `
+    <div style="
+      display:flex; flex-direction:column; align-items:center;
+      transform: translateX(-50%);
+    ">
+      <div style="
+        background:${color};
+        color:${textColor};
+        font-family:'Noto Sans SC',sans-serif;
+        font-size:11px; font-weight:700;
+        padding:5px 10px;
+        border-radius:20px;
+        white-space:nowrap;
+        box-shadow:0 2px 12px rgba(0,0,0,0.5);
+        max-width:120px; overflow:hidden; text-overflow:ellipsis;
+      ">${label}</div>
+      <div style="
+        width:0; height:0;
+        border-left:6px solid transparent;
+        border-right:6px solid transparent;
+        border-top:8px solid ${color};
+        margin-top:-1px;
+      "></div>
+      <div style="
+        width:10px; height:10px;
+        background:${color};
+        border-radius:50%;
+        margin-top:-1px;
+        box-shadow:0 0 8px ${color};
+      "></div>
+    </div>
+  `;
+
+  const startMarker = new AMap.Marker({
+    position: originLnglat,
+    content: makeIcon('A ' + originText, '#ffffff', '#000'),
+    offset: new AMap.Pixel(0, -10),
+    zIndex: 200,
+  });
+  const endMarker = new AMap.Marker({
+    position: destLnglat,
+    content: makeIcon('B ' + destText, '#ff3355', '#fff'),
+    offset: new AMap.Pixel(0, -10),
+    zIndex: 200,
+  });
+  startMarker.setMap(map);
+  endMarker.setMap(map);
+  routePolylines.push(startMarker, endMarker);
+}
+
+// ─── 分段绘制路线（先画完整底线，再叠加红色风险段） ──────────────────────────
+function drawSegmentedRoute(path, riskCams) {
+  if (!path.length) return;
+
+  // 1. 先画完整路线（加粗灰色底线，清晰可见）
+  drawPolyline(path, '#ccddee', 5, 0.85);
+
+  // 2. 如果没有风险点就结束
+  if (!riskCams.length) return;
+
+  // 3. 标记每个点是否在风险区
+  const isRisk = path.map(pt =>
+    riskCams.some(cam => haversine(pt, [cam.lng, cam.lat]) < 200)
+  );
+
+  // 4. 提取连续风险段，叠加红色粗线
+  let seg = null;
+  for (let i = 0; i < path.length; i++) {
+    if (isRisk[i]) {
+      if (!seg) seg = i > 0 ? [path[i-1], path[i]] : [path[i]];
+      else seg.push(path[i]);
+    } else {
+      if (seg) {
+        seg.push(path[i]);
+        drawPolyline(seg, '#ff3355', 6, 0.95);
+        seg = null;
+      }
+    }
+  }
+  if (seg) drawPolyline(seg, '#ff3355', 6, 0.95);
+}
+
+// ─── 风险摄像头圆圈 + 地图内 tips ────────────────────────────────────────────
+function highlightRiskCameras(cams) {
+  riskCircles.forEach(c => c.setMap(null));
+  riskCircles = [];
+
+  cams.forEach((cam, i) => {
+    // 黄色警戒圆
+    const circle = new AMap.Circle({
+      center: [cam.lng, cam.lat],
+      radius: 150,
+      strokeColor: '#ffcc00',
+      strokeWeight: 2,
+      strokeOpacity: 0.9,
+      fillColor: '#ffcc00',
+      fillOpacity: 0.15,
+      zIndex: 15,
+    });
+    circle.setMap(map);
+    riskCircles.push(circle);
+
+    // 地图内悬浮 tip 标签
+    const tip = new AMap.Marker({
+      position: [cam.lng, cam.lat],
+      content: `
+        <div style="
+          background:rgba(255,51,51,0.92);
+          color:#fff;
+          font-family:'Noto Sans SC',sans-serif;
+          font-size:10px; font-weight:600;
+          padding:3px 7px;
+          border-radius:4px;
+          white-space:nowrap;
+          box-shadow:0 2px 8px rgba(0,0,0,0.4);
+          transform:translateX(-50%) translateY(-130%);
+          pointer-events:none;
+        ">⚠️ 风险点 ${i + 1}</div>
+      `,
+      offset: new AMap.Pixel(0, 0),
+      zIndex: 180,
+    });
+    tip.setMap(map);
+    riskCircles.push(tip);
+  });
+}
+
+function drawPolyline(path, color, weight, opacity, dashArray) {
+  const poly = new AMap.Polyline({
+    path: path.map(p => new AMap.LngLat(p[0], p[1])),
+    strokeColor: color,
+    strokeWeight: weight,
+    strokeOpacity: opacity,
+    strokeDasharray: dashArray || null,
+    lineJoin: 'round',
+    lineCap: 'round',
+    zIndex: 20,
+  });
+  poly.setMap(map);
+  routePolylines.push(poly);
+}
+
+// ─── 导出到高德地图导航 ───────────────────────────────────────────────────────
+function exportToAmap() {
+  if (!lastOrigin || !lastDest) return;
+  const [oLng, oLat] = lastOrigin.lnglat;
+  const [dLng, dLat] = lastDest.lnglat;
+  const oName = encodeURIComponent(lastOrigin.name);
+  const dName = encodeURIComponent(lastDest.name);
+
+  // 优先尝试高德地图 App（手机端 URL Scheme）
+  const appUrl = `amapuri://route/plan?sourceApplication=camera_intel`
+    + `&slat=${oLat}&slng=${oLng}&sname=${oName}`
+    + `&dlat=${dLat}&dlng=${dLng}&dname=${dName}&dev=0&t=0`;
+
+  // 降级到高德 Web 版（PC / 未安装 App）
+  const webUrl = `https://uri.amap.com/navigation?from=${oLng},${oLat},${oName}&to=${dLng},${dLat},${dName}&mode=car&policy=0&src=camera_intel&coordinate=gaode&callnative=1`;
+
+  // 手机端先尝试唤起 App，1.5s 后降级到网页
+  const start = Date.now();
+  window.location.href = appUrl;
+  setTimeout(() => {
+    if (Date.now() - start < 2000) {
+      window.open(webUrl, '_blank');
+    }
+  }, 1500);
+}
+
+function clearRoutes() {
+  routePolylines.forEach(p => p.setMap(null));
+  riskCircles.forEach(c => c.setMap(null));
+  routePolylines = [];
+  riskCircles = [];
+}
+
+// ─── Distance helpers ─────────────────────────────────────────────────────────
+function haversine([lng1, lat1], [lng2, lat2]) {
+  const R = 6371000, rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*rad) * Math.cos(lat2*rad) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function isNearPath(path, point, thresholdMeters) {
+  for (let i = 0; i < path.length; i += 3) {
+    if (haversine(path[i], point) < thresholdMeters) return true;
+  }
+  return false;
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function showToast(type, title, body) {
+  const el = document.getElementById('toast');
+  el.className = `toast-${type}`;
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent  = body;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+// ─── Loading ─────────────────────────────────────────────────────────────────
+function showLoading(msg) {
+  document.querySelector('.loading-text').textContent = msg || '加载中…';
+  document.getElementById('loading').classList.remove('hidden');
+}
+function hideLoading() {
+  document.getElementById('loading').classList.add('hidden');
+}
+</script>
+</body>
+</html>
