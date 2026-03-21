@@ -232,13 +232,16 @@
   .legend {
     position: absolute;
     bottom: 16px; right: 10px;
-    background: rgba(10,12,16,0.88);
-    border: 1px solid var(--border);
+    background: rgba(10,12,16,0.45);
+    border: 1px solid rgba(255,255,255,0.06);
     border-radius: 8px;
     padding: 8px 10px;
     z-index: 200;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(10px);
+    opacity: 0.7;
+    transition: opacity 0.2s;
   }
+  .legend:hover { opacity: 1; }
   .legend-item {
     display: flex; align-items: center; gap: 6px;
     font-size: 10px; color: var(--text-secondary);
@@ -269,6 +272,38 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-text { font-size: 12px; color: var(--text-secondary); letter-spacing: 0.05em; }
+
+  /* ── 新增摄像头悬浮按钮 ── */
+  #add-camera-btn {
+    position: absolute;
+    bottom: 100px; right: 14px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(255,51,85,0.65);
+    border: 1px solid rgba(255,51,85,0.3);
+    color: #fff;
+    font-size: 22px; line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(255,51,85,0.25);
+    z-index: 300;
+    transition: transform 0.15s, background 0.2s, opacity 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+    opacity: 0.75;
+  }
+  #add-camera-btn:hover { opacity: 1; background: rgba(255,51,85,0.9); }
+  #add-camera-btn:active { transform: scale(0.92); }
+  #add-camera-btn.picking {
+    background: rgba(255,204,0,0.7);
+    border-color: rgba(255,204,0,0.4);
+    box-shadow: 0 2px 12px rgba(255,204,0,0.3);
+    opacity: 1;
+    animation: btn-pulse 1.2s infinite;
+  }
+  @keyframes btn-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
 
   /* Amap overrides */
   .amap-logo, .amap-copyright { opacity: 0.4 !important; }
@@ -320,6 +355,46 @@
   .report-btns button { flex:1;padding:10px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans SC',sans-serif; }
   .report-submit { background:linear-gradient(135deg,#00cc66,#009944);color:#000; }
   .report-cancel { background:var(--bg-panel);color:var(--text-secondary);border:1px solid var(--border); }
+
+  /* ── Comment styles ── */
+  .comment-input-wrap { background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:10px; }
+  .comment-type-row { display:flex;gap:6px; }
+  .type-btn {
+    flex:1;padding:5px 6px;background:var(--bg-panel);
+    border:1px solid var(--border);border-radius:6px;
+    color:var(--text-secondary);font-size:11px;cursor:pointer;
+    font-family:'Noto Sans SC',sans-serif;transition:all 0.15s;
+  }
+  .type-btn.active { background:rgba(68,136,255,0.15);border-color:#4488ff;color:#4488ff; }
+
+  .comment-item { padding:10px 0;border-bottom:1px solid var(--border); }
+  .comment-item:last-child { border-bottom:none; }
+  .comment-header { display:flex;align-items:center;gap:6px;margin-bottom:4px; }
+  .comment-nick { font-size:12px;font-weight:600; }
+  .comment-time { font-size:10px;color:var(--text-secondary); }
+  .comment-weight { font-size:9px;padding:1px 5px;border-radius:3px;margin-left:auto; }
+  .weight-high   { background:rgba(0,255,136,0.1);color:var(--accent-green); }
+  .weight-mid    { background:rgba(255,204,0,0.1);color:var(--accent-yellow); }
+  .weight-low    { background:rgba(100,100,100,0.15);color:var(--text-secondary); }
+  .comment-body { font-size:12px;color:var(--text-primary);line-height:1.5; }
+  .comment-type-tag {
+    font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;display:inline-block;margin-bottom:4px;
+  }
+  .tag-confirm { background:rgba(0,255,136,0.12);color:var(--accent-green); }
+  .tag-deny    { background:rgba(255,51,85,0.12);color:var(--accent-red); }
+  .tag-info    { background:rgba(68,136,255,0.12);color:var(--accent-blue); }
+  .comment-faded { opacity:0.45; }
+
+  .weight-bar-wrap { height:2px;background:var(--border);border-radius:1px;margin-top:6px;overflow:hidden; }
+  .weight-bar-fill { height:100%;border-radius:1px;transition:width 0.3s; }
+
+  /* search result items */
+  .search-result-item {
+    padding:7px 10px;background:var(--bg-panel);border:1px solid var(--border);
+    border-radius:6px;margin-bottom:4px;font-size:11px;cursor:pointer;
+    color:var(--text-primary);
+  }
+  .search-result-item:hover { border-color:#4488ff;color:#4488ff; }
   #detail-panel {
     position: absolute; bottom: 0; left: 0; right: 0;
     background: var(--bg-card);
@@ -420,20 +495,23 @@
     position: absolute;
     bottom: 90px; left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, #00cc66, #009944);
-    border: none;
+    background: rgba(0,180,80,0.65);
+    border: 1px solid rgba(0,255,136,0.2);
     border-radius: 24px;
-    color: #000;
+    color: #fff;
     font-family: 'Noto Sans SC', sans-serif;
     font-size: 13px; font-weight: 700;
     padding: 10px 24px;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0,204,102,0.4);
+    box-shadow: 0 2px 12px rgba(0,180,80,0.2);
     z-index: 300;
     letter-spacing: 0.05em;
-    transition: transform 0.15s, box-shadow 0.15s;
+    transition: transform 0.15s, background 0.2s;
     white-space: nowrap;
+    backdrop-filter: blur(8px);
+    opacity: 0.85;
   }
+  #export-btn:hover { opacity: 1; background: rgba(0,204,102,0.85); }
   #export-btn:active { transform: translateX(-50%) scale(0.96); }
 </style>
 </head>
@@ -509,6 +587,11 @@
     🧭 在高德导航
   </button>
 
+  <!-- 新增摄像头悬浮按钮 -->
+  <button id="add-camera-btn" onclick="startNewCameraReport()" title="上报新摄像头">
+    ＋
+  </button>
+
   <!-- 摄像头详情面板 -->
   <div id="detail-panel">
     <div class="detail-handle"></div>
@@ -519,9 +602,60 @@
     <div class="detail-meta" id="detail-meta"></div>
     <div class="conf-bar"><div class="conf-fill" id="detail-conf-fill"></div></div>
     <div style="font-size:10px;color:var(--text-secondary);margin-bottom:14px" id="detail-conf-text"></div>
-    <div class="reports-title">📋 用户上报记录</div>
+
+    <!-- 评论区 -->
+    <div class="reports-title">💬 社区讨论</div>
+    <div id="detail-comments"><div style="font-size:11px;color:var(--text-secondary);padding:8px 0">加载中…</div></div>
+
+    <!-- 发评论 -->
+    <div class="comment-input-wrap">
+      <div class="comment-type-row" id="comment-type-row">
+        <button class="type-btn active" data-type="confirm" onclick="selectCommentType(this)">✅ 仍有效</button>
+        <button class="type-btn" data-type="deny"    onclick="selectCommentType(this)">❌ 已撤销</button>
+        <button class="type-btn" data-type="info"    onclick="selectCommentType(this)">💬 补充</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <input class="report-input" id="comment-nickname" placeholder="你的昵称"
+          style="width:80px;flex-shrink:0;margin-bottom:0"
+          value="" />
+        <input class="report-input" id="comment-content" placeholder="说说你的情况…"
+          style="flex:1;margin-bottom:0" />
+        <button onclick="submitComment()" style="
+          background:linear-gradient(135deg,#4488ff,#2255cc);
+          border:none;border-radius:8px;color:#fff;
+          font-size:12px;font-weight:700;padding:0 12px;
+          cursor:pointer;flex-shrink:0;white-space:nowrap;
+        ">发送</button>
+      </div>
+    </div>
+
+    <div style="height:12px"></div>
+    <div class="reports-title" style="margin-top:4px">📋 上报记录</div>
     <div id="detail-reports"><div style="font-size:11px;color:var(--text-secondary);padding:10px 0">加载中…</div></div>
-    <button class="btn-report" onclick="openReportModal()">＋ 我也被这里拍了，上报摄像头</button>
+    <button class="btn-report" onclick="openReportModal()">＋ 我也被这里拍了，上报截图</button>
+  </div>
+
+  <!-- 地图选点提示 -->
+  <div id="pick-tip" style="display:none;
+    position:absolute;top:12px;left:50%;transform:translateX(-50%);
+    background:rgba(10,12,16,0.9);border:1px solid var(--border-bright);
+    border-radius:20px;padding:8px 16px;font-size:12px;color:#aabbff;
+    z-index:500;white-space:nowrap;pointer-events:none;
+    backdrop-filter:blur(6px);">
+    📍 长按地图选择摄像头位置
+  </div>
+
+  <!-- 选点临时标记 -->
+  <div id="pick-confirm" style="display:none;
+    position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--bg-card);border:1px solid var(--border-bright);
+    border-radius:12px;padding:12px 16px;z-index:500;
+    min-width:240px;backdrop-filter:blur(8px);">
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px" id="pick-addr-text">📍 已选择位置</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="cancelPick()" style="flex:1;padding:8px;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;color:var(--text-secondary);font-size:12px;cursor:pointer">取消</button>
+      <button onclick="confirmPick()" style="flex:1;padding:8px;background:linear-gradient(135deg,#00cc66,#009944);border:none;border-radius:8px;color:#000;font-size:12px;font-weight:700;cursor:pointer">上报此处</button>
+    </div>
   </div>
 </div>
 
@@ -530,6 +664,23 @@
   <div class="report-sheet">
     <h3>📡 上报摄像头</h3>
     <p id="report-modal-addr">上传违章截图，审核通过后将显示在地图</p>
+
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button class="type-btn active" id="loc-map-btn"    onclick="switchLocMode('map')"    style="flex:1">📍 地图长按选点</button>
+      <button class="type-btn"        id="loc-search-btn" onclick="switchLocMode('search')" style="flex:1">🔍 搜索地址</button>
+    </div>
+    <div id="loc-map-hint" style="font-size:11px;color:#4488ff;margin-bottom:10px;padding:6px 10px;background:rgba(68,136,255,0.08);border-radius:6px">
+      关闭弹窗后，在地图上 <b>长按</b> 任意位置选点
+    </div>
+    <div id="loc-search-wrap" style="display:none;margin-bottom:10px">
+      <div style="display:flex;gap:6px">
+        <input class="report-input" id="loc-search-input" placeholder="输入地址搜索…" style="margin-bottom:0;flex:1"
+          onkeydown="if(event.key==='Enter')searchReportLocation()" />
+        <button onclick="searchReportLocation()" style="background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;color:#aabbff;font-size:12px;padding:0 12px;cursor:pointer;white-space:nowrap">搜索</button>
+      </div>
+      <div id="loc-search-results" style="margin-top:6px"></div>
+    </div>
+
     <div class="upload-area" onclick="document.getElementById('screenshot-input').click()">
       <input type="file" id="screenshot-input" accept="image/*" onchange="previewImage(this)" />
       <img class="upload-preview" id="upload-preview" />
@@ -538,7 +689,7 @@
         <div class="upload-text">点击上传违章截图（必填）</div>
       </div>
     </div>
-    <textarea class="report-input" id="report-desc" rows="2" placeholder="补充说明（可选）：如被拍时间、车辆行驶方向…"></textarea>
+    <textarea class="report-input" id="report-desc" rows="2" placeholder="补充说明（可选）：如被拍时间、方向…"></textarea>
     <input class="report-input" id="report-province" placeholder="被拍车牌省份（可选，如：京、沪、粤…）" style="margin-bottom:10px" />
     <div class="report-btns">
       <button class="report-cancel" onclick="closeReportModal()">取消</button>
@@ -1164,18 +1315,34 @@ async function sbAnon(path, options = {}) {
   return text ? JSON.parse(text) : [];
 }
 
+// ─── 昵称持久化 ───────────────────────────────────────────────────────────────
+function getNickname() {
+  return localStorage.getItem('cam_nickname') || '';
+}
+function saveNickname(nick) {
+  if (nick) localStorage.setItem('cam_nickname', nick);
+}
+
+// ─── 评论衰变权重 ─────────────────────────────────────────────────────────────
+// 半衰期 90 天（评论比摄像头衰减更快）
+function commentWeight(createdAt) {
+  const days = (Date.now() - new Date(createdAt)) / 86400000;
+  return Math.max(0, Math.pow(0.5, days / 90));
+}
+
 // ─── 摄像头详情面板 ───────────────────────────────────────────────────────────
 let currentCamera = null;
+let currentCommentType = 'confirm';
 
 async function showCameraDetail(cam) {
   currentCamera = cam;
   const conf = cam.confidence ?? 100;
   const confColor = conf > 60 ? 'var(--accent-green)' : conf > 30 ? 'var(--accent-yellow)' : 'var(--accent-red)';
   const daysSince = cam.last_report_at
-    ? Math.floor((Date.now() - new Date(cam.last_report_at)) / 86400000)
-    : null;
+    ? Math.floor((Date.now() - new Date(cam.last_report_at)) / 86400000) : null;
 
-  document.getElementById('detail-addr').textContent = cam.address || `${cam.lng?.toFixed(4)}, ${cam.lat?.toFixed(4)}`;
+  document.getElementById('detail-addr').textContent =
+    cam.address || `${cam.lng?.toFixed(4)}, ${cam.lat?.toFixed(4)}`;
   document.getElementById('detail-meta').innerHTML = `
     <div class="meta-chip">${cam.status === 'active' ? '✅ 有效' : cam.status === 'pending' ? '⏳ 待审核' : '⚠️ 已失效'}</div>
     <div class="meta-chip">👥 ${cam.report_count ?? 1} 人上报</div>
@@ -1185,17 +1352,80 @@ async function showCameraDetail(cam) {
   document.getElementById('detail-conf-fill').style.cssText = `width:${conf}%;background:${confColor}`;
   document.getElementById('detail-conf-text').textContent =
     conf >= 70 ? '✅ 数据较新，可信度高' :
-    conf >= 40 ? '⚠️ 数据有一定时间，建议谨慎参考' :
-    '🔴 数据较旧（超过1年），准确度低';
+    conf >= 40 ? '⚠️ 数据有一定时间，建议谨慎参考' : '🔴 数据较旧，准确度低';
+
+  // 恢复昵称
+  document.getElementById('comment-nickname').value = getNickname();
 
   document.getElementById('detail-panel').classList.add('show');
   document.getElementById('report-modal-addr').textContent =
-    `位置：${cam.address || '未知地址'} · 审核通过后将显示在地图`;
+    `位置：${cam.address || '未知地址'}`;
 
-  // 拉取该摄像头的 reports
+  await Promise.all([loadComments(cam), loadReports(cam)]);
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('show');
+  currentCamera = null;
+}
+
+// ─── 加载评论 ─────────────────────────────────────────────────────────────────
+async function loadComments(cam) {
+  const el = document.getElementById('detail-comments');
+  el.innerHTML = '<div style="font-size:11px;color:var(--text-secondary);padding:6px 0">加载中…</div>';
+
+  try {
+    if (!cam.id || BACKEND_URL === 'https://YOUR_APP.railway.app') {
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-secondary);padding:6px 0">连接后端后可查看讨论</div>';
+      return;
+    }
+    const res = await fetch(`${BACKEND_URL}/api/cameras/${cam.id}/comments`);
+    const comments = res.ok ? await res.json() : [];
+
+    if (!comments.length) {
+      el.innerHTML = '<div style="font-size:11px;color:var(--text-secondary);padding:6px 0">暂无讨论，来说第一句话</div>';
+      return;
+    }
+
+    // 按时间倒序，计算权重
+    const withWeight = comments.map(c => ({
+      ...c, w: commentWeight(c.created_at)
+    })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    el.innerHTML = withWeight.map(c => {
+      const w = c.w;
+      const wLabel = w > 0.6 ? '高可信' : w > 0.25 ? '中可信' : '旧数据';
+      const wClass = w > 0.6 ? 'weight-high' : w > 0.25 ? 'weight-mid' : 'weight-low';
+      const faded  = w < 0.25 ? 'comment-faded' : '';
+      const typeTag = { confirm:'✅ 确认有效', deny:'❌ 已失效', info:'💬 补充' }[c.comment_type] || '';
+      const typeClass = { confirm:'tag-confirm', deny:'tag-deny', info:'tag-info' }[c.comment_type] || 'tag-info';
+      const t = new Date(c.created_at).toLocaleDateString('zh-CN');
+      const barColor = w > 0.6 ? '#00ff88' : w > 0.25 ? '#ffcc00' : '#445566';
+
+      return `
+        <div class="comment-item ${faded}">
+          <div class="comment-header">
+            <span class="comment-nick">${c.nickname || '匿名'}</span>
+            <span class="comment-time">${t}</span>
+            <span class="comment-weight ${wClass}">${wLabel}</span>
+          </div>
+          <div class="comment-type-tag ${typeClass}">${typeTag}</div>
+          <div class="comment-body">${c.content}</div>
+          <div class="weight-bar-wrap">
+            <div class="weight-bar-fill" style="width:${Math.round(w*100)}%;background:${barColor}"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="font-size:11px;color:var(--accent-red);padding:6px 0">加载失败</div>`;
+  }
+}
+
+// ─── 加载上报记录 ─────────────────────────────────────────────────────────────
+async function loadReports(cam) {
   const reportsEl = document.getElementById('detail-reports');
   reportsEl.innerHTML = '<div style="font-size:11px;color:var(--text-secondary);padding:8px 0">加载中…</div>';
-
   try {
     if (cam.id && BACKEND_URL !== 'https://YOUR_APP.railway.app') {
       const res = await fetch(`${BACKEND_URL}/api/cameras/${cam.id}/reports`);
@@ -1229,9 +1459,173 @@ async function showCameraDetail(cam) {
   }
 }
 
-function closeDetail() {
-  document.getElementById('detail-panel').classList.remove('show');
+// ─── 发表评论 ─────────────────────────────────────────────────────────────────
+function selectCommentType(btn) {
+  document.querySelectorAll('#comment-type-row .type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCommentType = btn.dataset.type;
+}
+
+async function submitComment() {
+  if (!currentCamera) return;
+  const nickname = document.getElementById('comment-nickname').value.trim() || '匿名';
+  const content  = document.getElementById('comment-content').value.trim();
+  if (!content) { showToast('error', '请输入内容', '评论不能为空'); return; }
+
+  saveNickname(nickname);
+
+  try {
+    if (BACKEND_URL === 'https://YOUR_APP.railway.app') throw new Error('请先配置后端');
+    const res = await fetch(`${BACKEND_URL}/api/cameras/${currentCamera.id}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nickname, content, comment_type: currentCommentType }),
+    });
+    if (!res.ok) throw new Error('发送失败');
+    document.getElementById('comment-content').value = '';
+    await loadComments(currentCamera);
+    showToast('safe', '✅ 已发送', '');
+  } catch(e) {
+    showToast('error', '发送失败', e.message);
+  }
+}
+
+// ─── 新增摄像头入口（悬浮按钮） ──────────────────────────────────────────────
+function startNewCameraReport() {
+  const btn = document.getElementById('add-camera-btn');
+  if (pickMode) {
+    // 再次点击取消选点
+    cancelPick();
+    btn.classList.remove('picking');
+    btn.textContent = '＋';
+    return;
+  }
+  // 关闭详情面板，进入选点模式
+  closeDetail();
+  btn.classList.add('picking');
+  btn.textContent = '✕';
   currentCamera = null;
+  enterPickMode();
+}
+
+// ─── 地图选点 ─────────────────────────────────────────────────────────────────
+let pickMode = false;
+let pickMarker = null;
+let pickedLocation = null; // { lng, lat, address }
+
+function enterPickMode() {
+  pickMode = true;
+  closeReportModal();
+  document.getElementById('pick-tip').style.display = 'block';
+  map.setDefaultCursor('crosshair');
+
+  // 长按 / click 选点
+  map.on('click', onMapPick);
+}
+
+function onMapPick(e) {
+  if (!pickMode) return;
+  const lng = e.lnglat.getLng();
+  const lat = e.lnglat.getLat();
+  pickedLocation = { lng, lat, address: '' };
+
+  // 放置临时标记
+  if (pickMarker) pickMarker.setMap(null);
+  pickMarker = new AMap.Marker({
+    position: [lng, lat],
+    content: `<div style="width:20px;height:20px;border-radius:50%;background:#00ff88;border:3px solid #fff;box-shadow:0 0 10px #00ff88;transform:translate(-50%,-50%)"></div>`,
+    offset: new AMap.Pixel(0, 0),
+    zIndex: 999,
+  });
+  pickMarker.setMap(map);
+
+  // 逆地理编码获取地址
+  document.getElementById('pick-addr-text').textContent = '📍 解析地址中…';
+  document.getElementById('pick-confirm').style.display = 'block';
+
+  const gcUrl = `https://restapi.amap.com/v3/geocode/regeo?location=${lng},${lat}&key=${AMAP_REST_KEY}&radius=50&output=json`;
+  fetch(gcUrl).then(r => r.json()).then(data => {
+    const addr = data.regeocode?.formatted_address || `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
+    pickedLocation.address = addr;
+    document.getElementById('pick-addr-text').textContent = `📍 ${addr}`;
+  }).catch(() => {
+    document.getElementById('pick-addr-text').textContent = `📍 ${lng.toFixed(5)}, ${lat.toFixed(5)}`;
+  });
+}
+
+function cancelPick() {
+  pickMode = false;
+  if (pickMarker) { pickMarker.setMap(null); pickMarker = null; }
+  pickedLocation = null;
+  document.getElementById('pick-tip').style.display = 'none';
+  document.getElementById('pick-confirm').style.display = 'none';
+  map.setDefaultCursor('');
+  map.off('click', onMapPick);
+  // 重置悬浮按钮
+  const btn = document.getElementById('add-camera-btn');
+  btn.classList.remove('picking');
+  btn.textContent = '＋';
+}
+
+function confirmPick() {
+  if (!pickedLocation) return;
+  currentCamera = { ...pickedLocation, id: null };
+  document.getElementById('pick-confirm').style.display = 'none';
+  document.getElementById('pick-tip').style.display = 'none';
+  pickMode = false;
+  map.setDefaultCursor('');
+  map.off('click', onMapPick);
+  // 重置悬浮按钮
+  const btn = document.getElementById('add-camera-btn');
+  btn.classList.remove('picking');
+  btn.textContent = '＋';
+  openReportModal();
+  document.getElementById('report-modal-addr').textContent = `位置：${pickedLocation.address}`;
+}
+
+// ─── 上报弹窗位置模式切换 ────────────────────────────────────────────────────
+function switchLocMode(mode) {
+  document.getElementById('loc-map-btn').classList.toggle('active', mode === 'map');
+  document.getElementById('loc-search-btn').classList.toggle('active', mode === 'search');
+  document.getElementById('loc-map-hint').style.display    = mode === 'map'    ? 'block' : 'none';
+  document.getElementById('loc-search-wrap').style.display = mode === 'search' ? 'block' : 'none';
+  if (mode === 'map') {
+    closeReportModal();
+    enterPickMode();
+  }
+}
+
+async function searchReportLocation() {
+  const q = document.getElementById('loc-search-input').value.trim();
+  if (!q) return;
+  const url = `https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(q)}&city=北京&key=${AMAP_REST_KEY}&output=json`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const results = document.getElementById('loc-search-results');
+    if (!data.geocodes?.length) { results.innerHTML = '<div style="font-size:11px;color:var(--accent-red)">未找到结果</div>'; return; }
+    results.innerHTML = data.geocodes.slice(0, 4).map(g => {
+      const [lng, lat] = g.location.split(',').map(Number);
+      return `<div class="search-result-item" onclick="selectSearchResult(${lng},${lat},'${g.formatted_address}')">
+        📍 ${g.formatted_address}
+      </div>`;
+    }).join('');
+  } catch(e) { showToast('error', '搜索失败', e.message); }
+}
+
+function selectSearchResult(lng, lat, address) {
+  pickedLocation = { lng, lat, address };
+  currentCamera = { lng, lat, address, id: null };
+  document.getElementById('report-modal-addr').textContent = `位置：${address}`;
+  document.getElementById('loc-search-results').innerHTML = `<div style="font-size:11px;color:var(--accent-green);padding:4px 0">✅ 已选择：${address}</div>`;
+  map.setCenter([lng, lat]);
+  if (pickMarker) pickMarker.setMap(null);
+  pickMarker = new AMap.Marker({
+    position: [lng, lat],
+    content: `<div style="width:20px;height:20px;border-radius:50%;background:#00ff88;border:3px solid #fff;box-shadow:0 0 10px #00ff88;transform:translate(-50%,-50%)"></div>`,
+    offset: new AMap.Pixel(0, 0), zIndex: 999,
+  });
+  pickMarker.setMap(map);
 }
 
 // ─── 上报弹窗 ─────────────────────────────────────────────────────────────────
