@@ -560,7 +560,8 @@
   <div class="input-section">
     <div class="input-row">
       <div class="input-label start">A</div>
-      <input class="input-field" id="origin-input" placeholder="起点（如：首都机场T3）" />
+      <input class="input-field" id="origin-input" placeholder="起点（如：首都机场T3）"
+        oninput="this._lnglat=null;this.style.color=''" />
     </div>
     <div class="input-row">
       <div class="input-label end">B</div>
@@ -897,6 +898,19 @@ function locateUser() {
       placeUserMarker(lng, lat);
       document.getElementById('status-text').textContent = `${cameras.length} 点位`;
       showToast('info', '📍 已定位', '地图已移至你的当前位置');
+
+      // 逆地理编码，把坐标转成地址填入起点
+      const gcUrl = `https://restapi.amap.com/v3/geocode/regeo?location=${lng},${lat}&key=${AMAP_REST_KEY}&radius=50&output=json`;
+      fetch(gcUrl).then(r => r.json()).then(data => {
+        const addr = data.regeocode?.formatted_address || `${lng.toFixed(5)},${lat.toFixed(5)}`;
+        const input = document.getElementById('origin-input');
+        input.value = addr;
+        input.style.color = 'var(--accent-green)';
+        // 存坐标供规划直接用，不用再 geocode 一次
+        input._lnglat = [lng, lat];
+      }).catch(() => {
+        document.getElementById('origin-input').value = `${lng.toFixed(5)},${lat.toFixed(5)}`;
+      });
     },
     err => {
       console.warn('定位失败:', err.message);
@@ -1028,7 +1042,11 @@ async function startPlanning(mode = 'normal') {
 
   try {
     const [originLnglat, destLnglat] = await Promise.all([
-      geocodeAddress(originText),
+      (() => {
+        const input = document.getElementById('origin-input');
+        if (input._lnglat) return Promise.resolve(input._lnglat);
+        return geocodeAddress(originText);
+      })(),
       geocodeAddress(destText),
     ]);
 
