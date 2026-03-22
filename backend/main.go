@@ -231,6 +231,7 @@ type claudeResp struct {
 // moderateText 返回 "" 表示合规，否则返回拒绝原因
 func moderateText(texts ...string) string {
 	if claudeKey == "" {
+		log.Println("[合规] ANTHROPIC_API_KEY 未配置，跳过校验")
 		return "" // 未配置 key 则跳过校验
 	}
 	combined := ""
@@ -240,8 +241,10 @@ func moderateText(texts ...string) string {
 		}
 	}
 	if combined == "" {
+		log.Println("[合规] 文本为空，跳过校验")
 		return ""
 	}
+	log.Printf("[合规] 开始校验文本: %s", combined)
 
 	prompt := `你是一个内容安全审核助手。请判断以下用户输入是否包含违规内容。
 
@@ -269,13 +272,14 @@ func moderateText(texts ...string) string {
 	client := &http.Client{Timeout: 8 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Claude 审核请求失败: %v", err)
+		log.Printf("[合规] Claude 请求失败: %v", err)
 		return "" // 网络失败放行，不影响用户体验
 	}
 	defer resp.Body.Close()
 
 	var cr claudeResp
 	if err := json.NewDecoder(resp.Body).Decode(&cr); err != nil || len(cr.Content) == 0 {
+		log.Printf("[合规] Claude 响应解析失败: %v", err)
 		return ""
 	}
 
@@ -284,6 +288,7 @@ func moderateText(texts ...string) string {
 		Reason string `json:"reason"`
 	}
 	text := cr.Content[0].Text
+	log.Printf("[合规] Claude 响应: %s", text)
 	// 提取 JSON
 	start := strings.Index(text, "{")
 	end := strings.LastIndex(text, "}")
@@ -294,8 +299,10 @@ func moderateText(texts ...string) string {
 		if result.Reason == "" {
 			result.Reason = "内容不符合社区规范"
 		}
+		log.Printf("[合规] 拦截内容，原因: %s", result.Reason)
 		return result.Reason
 	}
+	log.Println("[合规] 内容合规通过")
 	return ""
 }
 
