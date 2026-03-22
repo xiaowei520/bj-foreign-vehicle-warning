@@ -273,12 +273,20 @@ func moderateText(texts ...string) string {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("[合规] Claude 请求失败: %v", err)
-		return "" // 网络失败放行，不影响用户体验
+		return ""
 	}
 	defer resp.Body.Close()
 
+	rawBody, _ := io.ReadAll(resp.Body)
+	log.Printf("[合规] Claude 原始响应 status=%d body=%s", resp.StatusCode, string(rawBody))
+
+	if resp.StatusCode != 200 {
+		log.Printf("[合规] Claude 返回非200，跳过校验")
+		return ""
+	}
+
 	var cr claudeResp
-	if err := json.NewDecoder(resp.Body).Decode(&cr); err != nil || len(cr.Content) == 0 {
+	if err := json.Unmarshal(rawBody, &cr); err != nil || len(cr.Content) == 0 {
 		log.Printf("[合规] Claude 响应解析失败: %v", err)
 		return ""
 	}
