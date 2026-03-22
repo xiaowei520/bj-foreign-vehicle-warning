@@ -475,47 +475,34 @@ func sendFeishuCard(reportID, cameraID int64, lng, lat float64, address, screens
 	approve := fmt.Sprintf("%s/api/review/callback?report_id=%d&action=approve&token=%s", reviewCallbackURL, reportID, adminToken)
 	reject  := fmt.Sprintf("%s/api/review/callback?report_id=%d&action=reject&token=%s", reviewCallbackURL, reportID, adminToken)
 
-	card := map[string]any{
-		"msg_type": "interactive",
-		"card": map[string]any{
-			"header": map[string]any{
-				"title":    map[string]string{"tag": "plain_text", "content": "📡 新摄像头上报待审核"},
-				"template": "orange",
-			},
-			"elements": []any{
-				map[string]any{
-					"tag": "div",
-					"fields": []any{
-						larkField("**位置**\n"+address, true),
-						larkField("**车牌省份**\n"+plate, true),
-						larkField("**说明**\n"+desc, false),
-						larkField(fmt.Sprintf("**ID** Report:%d  Camera:%d", reportID, cameraID), false),
-					},
-				},
-				map[string]any{"tag": "img", "img_key": screenshotURL,
-					"alt": map[string]string{"tag": "plain_text", "content": "违章截图"}},
-				map[string]any{"tag": "hr"},
-				map[string]any{
-					"tag": "action",
-					"actions": []any{
-						map[string]any{"tag": "button", "type": "primary", "url": approve,
-							"text": map[string]string{"tag": "plain_text", "content": "✅ 通过"}},
-						map[string]any{"tag": "button", "type": "danger", "url": reject,
-							"text": map[string]string{"tag": "plain_text", "content": "✕ 拒绝"}},
-					},
-				},
-			},
-		},
-	}
+	// 用纯文本消息，避免卡片格式问题
+	text := fmt.Sprintf(
+		"📡 新摄像头上报待审核\n\n"+
+		"📍 位置：%s\n"+
+		"🚗 车牌省份：%s\n"+
+		"📝 说明：%s\n"+
+		"🖼 截图：%s\n"+
+		"🆔 Report:%d  Camera:%d\n\n"+
+		"✅ 通过：%s\n"+
+		"✕ 拒绝：%s",
+		address, plate, desc, screenshotURL,
+		reportID, cameraID,
+		approve, reject,
+	)
 
-	body, _ := json.Marshal(card)
+	body, _ := json.Marshal(map[string]any{
+		"msg_type": "text",
+		"content":  map[string]string{"text": text},
+	})
+
 	resp, err := http.Post(feishuWebhook, "application/json", bytes.NewReader(body))
 	if err != nil {
 		log.Printf("飞书推送失败: %v", err)
 		return
 	}
 	defer resp.Body.Close()
-	log.Printf("飞书推送成功 report_id=%d", reportID)
+	respBody, _ := io.ReadAll(resp.Body)
+	log.Printf("飞书推送成功 report_id=%d, resp=%s", reportID, string(respBody))
 }
 
 func larkField(content string, isShort bool) map[string]any {
