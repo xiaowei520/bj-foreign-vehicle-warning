@@ -219,6 +219,86 @@ func getCameras(c *gin.Context) {
 	c.JSON(200, cameras)
 }
 
+// ─── Claude 内容合规校验 ──────────────────────────────────────────────────────
+var claudeKey = getEnv("ANTHROPIC_API_KEY", "")
+
+type claudeResp struct {
+	Content []struct {
+		Text string `json:"text"`
+	} `json:"content"`
+}
+
+// moderateText 返回 "" 表示合规，否则返回拒绝原因
+func moderateText(texts ...string) string {
+	if claudeKey == "" {
+		return "" // 未配置 key 则跳过校验
+	}
+	combined := ""
+	for _, t := range texts {
+		if t != "" {
+			combined += t + "\n"
+		}
+	}
+	if combined == "" {
+		return ""
+	}
+
+	prompt := `你是一个内容安全审核助手。请判断以下用户输入是否包含违规内容。
+
+违规类型包括：色情、赌博、毒品、涉政敏感、暴力、广告推广、个人隐私泄露、无意义内容。
+
+用户输入：
+` + combined + `
+
+请只回复 JSON，格式如下：
+{"pass": true} 或 {"pass": false, "reason": "违规原因简述"}`
+
+	body, _ := json.Marshal(map[string]any{
+		"model":      "claude-haiku-4-5-20251001",
+		"max_tokens": 100,
+		"messages": []map[string]string{
+			{"role": "user", "content": prompt},
+		},
+	})
+
+	req, _ := http.NewRequest("POST", "https://api.anthropic.com/v1/messages", bytes.NewReader(body))
+	req.Header.Set("x-api-key", claudeKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+	req.Header.Set("content-type", "application/json")
+
+	client := &http.Client{Timeout: 8 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Claude 审核请求失败: %v", err)
+		return "" // 网络失败放行，不影响用户体验
+	}
+	defer resp.Body.Close()
+
+	var cr claudeResp
+	if err := json.NewDecoder(resp.Body).Decode(&cr); err != nil || len(cr.Content) == 0 {
+		return ""
+	}
+
+	var result struct {
+		Pass   bool   `json:"pass"`
+		Reason string `json:"reason"`
+	}
+	text := cr.Content[0].Text
+	// 提取 JSON
+	start := strings.Index(text, "{")
+	end := strings.LastIndex(text, "}")
+	if start >= 0 && end > start {
+		json.Unmarshal([]byte(text[start:end+1]), &result)
+	}
+	if !result.Pass {
+		if result.Reason == "" {
+			result.Reason = "内容不符合社区规范"
+		}
+		return result.Reason
+	}
+	return ""
+}
+
 // ─── POST /api/report ─────────────────────────────────────────────────────────
 func submitReport(c *gin.Context) {
 	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
@@ -235,6 +315,12 @@ func submitReport(c *gin.Context) {
 
 	if lng == 0 || lat == 0 {
 		c.JSON(400, gin.H{"error": "缺少坐标信息"})
+		return
+	}
+
+	// 文本合规校验
+	if reason := moderateText(description, plateProvince); reason != "" {
+		c.JSON(400, gin.H{"error": "内容审核未通过：" + reason})
 		return
 	}
 
@@ -356,6 +442,11 @@ func postComment(c *gin.Context) {
 	}
 	if body.Content == "" {
 		c.JSON(400, gin.H{"error": "内容不能为空"})
+		return
+	}
+	// 文本合规校验
+	if reason := moderateText(body.Content, body.Nickname); reason != "" {
+		c.JSON(400, gin.H{"error": "内容审核未通过：" + reason})
 		return
 	}
 	if body.Nickname == "" {
