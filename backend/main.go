@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -219,6 +220,41 @@ func getCameras(c *gin.Context) {
 	c.JSON(200, cameras)
 }
 
+// ─── 本地规则校验（Claude 降级方案） ─────────────────────────────────────────
+var sensitivePatterns = []struct {
+	pattern string
+	reason  string
+}{
+	// 毒品
+	{"冰毒|大麻|海洛因|可卡因|摇头丸|毒品|吸毒|贩毒|违禁药|迷药|K粉|麻古", "疑似涉及毒品相关内容"},
+	// 赌博
+	{"赌博|赌场|博彩|押注|下注|百家乐|老虎机|彩票代购|网赌|赌球", "疑似涉及赌博相关内容"},
+	// 色情
+	{"色情|卖淫|嫖娼|援交|约炮|一夜情|小姐服务|成人服务|裸聊", "疑似涉及色情相关内容"},
+	// 诈骗/广告
+	{"加微信|加QQ|加好友|私信我|联系我|出售|低价|代购|刷单|兼职日赚|返利", "疑似广告或诈骗信息"},
+	// 涉政
+	{"法轮功|六四|天安门事件|推翻|颠覆|政权|暴动|革命党", "涉及敏感政治内容"},
+	// 暴力
+	{"杀人|爆炸|枪支|炸弹|武器|砍人|恐怖袭击|自杀教程", "疑似涉及暴力内容"},
+	// 联系方式（结合敏感词）
+	{"微信.{0,10}\\d{5,}|QQ.{0,10}\\d{5,}|手机.{0,10}1[3-9]\\d{9}", "疑似含有推广联系方式"},
+}
+
+func localModerate(texts ...string) string {
+	combined := strings.Join(texts, " ")
+	if combined == "" {
+		return ""
+	}
+	for _, p := range sensitivePatterns {
+		matched, _ := regexp.MatchString(p.pattern, combined)
+		if matched {
+			return p.reason
+		}
+	}
+	return ""
+}
+
 // ─── Claude 内容合规校验 ──────────────────────────────────────────────────────
 var claudeKey = getEnv("ANTHROPIC_API_KEY", "")
 
@@ -231,8 +267,8 @@ type claudeResp struct {
 // moderateText 返回 "" 表示合规，否则返回拒绝原因
 func moderateText(texts ...string) string {
 	if claudeKey == "" {
-		log.Println("[合规] ANTHROPIC_API_KEY 未配置，跳过校验")
-		return "" // 未配置 key 则跳过校验
+		log.Println("[合规] ANTHROPIC_API_KEY 未配置，使用本地规则校验")
+		return localModerate(texts...)
 	}
 	combined := ""
 	for _, t := range texts {
@@ -272,8 +308,8 @@ func moderateText(texts ...string) string {
 	client := &http.Client{Timeout: 8 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("[合规] Claude 请求失败: %v", err)
-		return ""
+		log.Printf("[合规] Claude 请求失败: %v，降级到本地规则校验", err)
+		return localModerate(texts...)
 	}
 	defer resp.Body.Close()
 
@@ -281,8 +317,8 @@ func moderateText(texts ...string) string {
 	log.Printf("[合规] Claude 原始响应 status=%d body=%s", resp.StatusCode, string(rawBody))
 
 	if resp.StatusCode != 200 {
-		log.Printf("[合规] Claude 返回非200，跳过校验")
-		return ""
+		log.Printf("[合规] Claude 返回非200，降级到本地规则校验")
+		return localModerate(texts...)
 	}
 
 	var cr claudeResp
