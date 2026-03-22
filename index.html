@@ -362,6 +362,8 @@
   .report-badge { font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:4px;display:inline-block; }
   .badge-approved { background:rgba(0,255,136,0.12);color:var(--accent-green); }
   .badge-pending  { background:rgba(255,204,0,0.12);color:var(--accent-yellow); }
+  .badge-rejected { background:rgba(255,51,85,0.12);color:var(--accent-red); }
+  .badge-rejected { background:rgba(255,51,85,0.12);color:var(--accent-red); }
   .btn-report { width:100%;background:linear-gradient(135deg,#334466,#223355);border:1px solid #445588;border-radius:8px;color:#aabbff;font-size:12px;font-weight:700;padding:10px;cursor:pointer;margin-top:10px;font-family:'Noto Sans SC',sans-serif; }
 
   /* ── Report Modal ── */
@@ -1554,12 +1556,13 @@ async function loadReports(cam) {
         reportsEl.innerHTML = reports.map(r => {
           const t = new Date(r.reported_at).toLocaleDateString('zh-CN');
           const isPending = r.status !== 'approved';
+          const blurLabel = r.status === 'rejected' ? '已拒绝' : '审核中';
           const thumbHtml = r.screenshot_url ? `
             <div class="report-thumb-wrap">
               <img class="report-thumb ${isPending ? 'blurred' : ''}"
                 src="${r.screenshot_url}"
                 ${!isPending ? `onclick="openImgModal('${r.screenshot_url}')"` : ''} />
-              ${isPending ? `<div class="blur-badge">审核中<br>已打码</div>` : ''}
+              ${isPending ? `<div class="blur-badge">${blurLabel}<br>已打码</div>` : ''}
             </div>
           ` : `<div style="width:48px;height:48px;background:var(--border);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px">📷</div>`;
           return `
@@ -1568,8 +1571,9 @@ async function loadReports(cam) {
               <div class="report-info">
                 <div class="report-time">🕐 ${t} ${r.plate_province ? `· 🚗 ${r.plate_province}` : ''}</div>
                 <div class="report-desc">${r.description || '无补充说明'}</div>
-                <div class="report-badge ${r.status === 'approved' ? 'badge-approved' : 'badge-pending'}">
-                  ${r.status === 'approved' ? '✅ 已验证' : '⏳ 待审核'}
+                ${r.reviewer_note ? `<div style="font-size:10px;color:var(--accent-red);margin-top:3px">拒绝原因：${r.reviewer_note}</div>` : ''}
+                <div class="report-badge ${r.status === 'approved' ? 'badge-approved' : r.status === 'rejected' ? 'badge-rejected' : 'badge-pending'}">
+                  ${r.status === 'approved' ? '✅ 已验证' : r.status === 'rejected' ? '❌ 已拒绝' : '⏳ 待审核'}
                 </div>
               </div>
             </div>
