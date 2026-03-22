@@ -305,6 +305,12 @@
     50% { transform: scale(1.08); }
   }
 
+  /* ── 用户位置动画 ── */
+  @keyframes user-pulse {
+    0%, 100% { box-shadow: 0 0 0 6px rgba(68,136,255,0.1), 0 0 16px rgba(68,136,255,0.3); }
+    50%       { box-shadow: 0 0 0 10px rgba(68,136,255,0.05), 0 0 24px rgba(68,136,255,0.5); }
+  }
+
   /* Amap overrides */
   .amap-logo, .amap-copyright { opacity: 0.4 !important; }
 
@@ -832,8 +838,9 @@ let cameraMarkers = [];
 let riskCircles = [];
 let routePolylines = [];
 let toastTimer;
-let lastOrigin = null, lastDest = null; // 用于导出高德导航
-let lastRiskRoadNames = [];             // 用于导出前弹窗提示
+let lastOrigin = null, lastDest = null;
+let lastRiskRoadNames = [];
+let userMarker = null; // 用户位置小人图标
 
 window.onload = () => initApp(AMAP_KEY);
 
@@ -856,6 +863,8 @@ async function initApp(key) {
     updateStats();
     hideLoading();
     document.getElementById('status-text').textContent = `${cameras.length} 点位`;
+    // 获取用户位置（地图加载完后异步定位）
+    locateUser();
   } catch(e) {
     hideLoading();
     showToast('error', 'Key 无效或网络错误', '请检查高德 API Key 是否正确，或刷新重试');
@@ -866,9 +875,82 @@ async function initApp(key) {
 function initMap() {
   map = new AMap.Map('map', {
     viewMode: '2D',
-    zoom: 11,
+    zoom: 14,
     center: [116.4074, 39.9042],
     mapStyle: 'amap://styles/dark',
+  });
+}
+
+// ─── 用户定位 ─────────────────────────────────────────────────────────────────
+function locateUser() {
+  if (!navigator.geolocation) return;
+
+  document.getElementById('status-text').textContent = '定位中…';
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { longitude: lng, latitude: lat } = pos.coords;
+      // 移动地图中心到用户位置
+      map.setCenter([lng, lat]);
+      map.setZoom(15);
+      // 放置小人图标
+      placeUserMarker(lng, lat);
+      document.getElementById('status-text').textContent = `${cameras.length} 点位`;
+      showToast('info', '📍 已定位', '地图已移至你的当前位置');
+    },
+    err => {
+      console.warn('定位失败:', err.message);
+      document.getElementById('status-text').textContent = `${cameras.length} 点位`;
+    },
+    { timeout: 8000, maximumAge: 60000, enableHighAccuracy: true }
+  );
+}
+
+function placeUserMarker(lng, lat) {
+  if (userMarker) userMarker.setMap(null);
+
+  const content = `
+    <div style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: translateX(-50%) translateY(-100%);
+    ">
+      <!-- 小人 SVG -->
+      <div style="
+        background: rgba(68,136,255,0.15);
+        border: 2px solid rgba(68,136,255,0.5);
+        border-radius: 50%;
+        width: 36px; height: 36px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 0 0 6px rgba(68,136,255,0.1), 0 0 16px rgba(68,136,255,0.3);
+        animation: user-pulse 2s infinite;
+      ">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="6" r="3.5" fill="#4488ff"/>
+          <path d="M5 19c0-4 3.134-7 7-7s7 3 7 7" stroke="#4488ff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <!-- 指针 -->
+      <div style="
+        width: 0; height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 7px solid rgba(68,136,255,0.5);
+        margin-top: -1px;
+      "></div>
+    </div>
+  `;
+
+  userMarker = new AMap.Marker({
+    position: [lng, lat],
+    content,
+    offset: new AMap.Pixel(0, 0),
+    zIndex: 999,
+  });
+  userMarker.setMap(map);
+  userMarker.on('click', () => {
+    showToast('info', '📍 你在这里', `经度 ${lng.toFixed(5)}  纬度 ${lat.toFixed(5)}`);
   });
 }
 
